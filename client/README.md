@@ -1,4 +1,6 @@
-# Getting Started with Create React App
+# Getting Started with Robot Radar GUI
+
+***Remember to cd into the client directory before trying to run the app. 
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
