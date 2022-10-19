@@ -15,7 +15,7 @@ def index():
 def forward():
     print("Forward")
     gpg3.forward()
-    gpg3.drive_cm(50, True)
+    #gpg3.drive_cm(50, True)
     sleep(1)
     return 'forward'
 
