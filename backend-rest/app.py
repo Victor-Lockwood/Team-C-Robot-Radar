@@ -7,6 +7,7 @@ import os
 from flask import Flask, jsonify, request
 
 import ResponseClasses
+import init_db
 
 # creating a Flask app
 app = Flask(__name__)
@@ -23,6 +24,8 @@ def home():
         response.content_type = "json"
         data = ResponseClasses.LocationResponse(1)
         response.data = json.dumps(data, cls=ResponseClasses.LocationResponseEncoder)
+
+        init_db.db_init_test()
         return response
 
 

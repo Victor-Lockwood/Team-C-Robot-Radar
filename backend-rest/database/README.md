@@ -13,5 +13,6 @@ otherwise it will spit out a bunch of gibberish.
 
 ## To Build Locally
 In pgAdmin 4:
+- Select the DB to update, or create a new one and name it `RobotRadarAlpha`
 - Open up `PSQL Tool` from the `Tools` menu
 - Copy and paste the contents of this `.sql` file into the shell
