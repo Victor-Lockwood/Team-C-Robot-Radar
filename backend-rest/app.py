@@ -2,15 +2,17 @@
 # { DEV }	-	{ YYYY/MM/DD }	-	{ MODIFICATIONS }
 # import necessary libraries and functions
 import json
+import os
 
 from flask import Flask, jsonify, request
+
 import ResponseClasses
 
 # creating a Flask app
 app = Flask(__name__)
 
 
-# http://127.0.0.1:5000/
+# http://localhost:5000/mapdata
 
 # Get the current map data
 # Note: Currently has dummy data
@@ -37,4 +39,9 @@ def disp(num):
 
 # driver function
 if __name__ == '__main__':
-    app.run(debug=True)
+    # This is important for Docker
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)
+
+
+
