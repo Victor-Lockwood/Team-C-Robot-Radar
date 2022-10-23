@@ -1,5 +1,5 @@
 # Database
-The SQL in this file is meant to be run in by PSQL - it will not work as 
+The SQL in this file is meant to be run by PSQL - it will not work as 
 standard SQL syntax. 
 
 Be sure to update this file when the schema changes.
