@@ -6,6 +6,7 @@ import psycopg2
 
 
 def db_init_test():
+    #NOTE: Password redacted
     os.environ['DB_PASSWORD'] = ""
     password = os.environ['DB_PASSWORD']
 
