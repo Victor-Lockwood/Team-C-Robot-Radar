@@ -1,4 +1,6 @@
 import './App.css';
+import React from 'react';
+
 import { ThemeProvider, createMuiTheme } from '@mui/material/styles';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import Layout from './layout';
