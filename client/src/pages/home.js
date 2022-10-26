@@ -1,19 +1,15 @@
 import * as React from 'react';
-import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
-import { AppBar, Button, Stack, Toolbar, Typography } from '@mui/material';
-import CssBaseline from '@mui/material/CssBaseline';
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
-import Latency from '../components/latency';
+import { AppBar, Avatar, Button, CardHeader, Stack, Toolbar, Typography } from '@mui/material';
+import CameraswitchRoundedIcon from '@mui/icons-material/CameraswitchRounded';
 import ControlGrid from '../components/controlGrid';
-import Webcam from "react-webcam";
-import SensorChart from '../components/sensorChart';
-
+import TerminalRoundedIcon from '@mui/icons-material/TerminalRounded';
+import Main from '../components/Main/Main';
+import { blue, green, pink, purple } from '@mui/material/colors';
+import RadarRoundedIcon from '@mui/icons-material/RadarRounded';
+import VrpanoRoundedIcon from '@mui/icons-material/VrpanoRounded';
 
 export default function Home() {
   const handleSubmit = (event) => {
@@ -32,7 +28,7 @@ export default function Home() {
         <Paper elevation={3}>
             <br/>
             <h2>
-            Hello Adam!
+            Hello, Adam!
             </h2>
     
          <br/>
@@ -46,32 +42,58 @@ export default function Home() {
         </Grid>
         <Grid item xs={6}>
             <Paper elevation={3}>
-         Latency
+         <CardHeader
+        style={{'background': '#b0bec5'}}
+        avatar={
+          <Avatar sx={{ bgcolor: blue[500] }} aria-label="Radar">
+           <RadarRoundedIcon/>
+          </Avatar>
+        }
+        title="R A D A R"
+        subheader="PATHFINDER"
+      />
          <br/>
-<SensorChart/>    
-            <br/>
-           
-            </Paper>
-            <br/>
-            <Paper elevation={3}>
-         Radar View
-    
-         <br/>
-        
+         <Main/>
          </Paper>
         </Grid>
         <Grid item xs={3}>
         <Paper elevation={3} >
-         Camera
+        <CardHeader
+        style={{'background': '#b0bec5'}}
+        avatar={
+          <Avatar sx={{ bgcolor: green[500] }} aria-label="Camera">
+           <CameraswitchRoundedIcon/>
+          </Avatar>
+        }
+        action={
+          <Button variant="contained" startIcon={<VrpanoRoundedIcon />}>
+          Panoramic
+        </Button>
+        }
+        title="I M A G I N G"
+        subheader="PANORAMIC IMAGING"
+      />
             <br/>
-            <Webcam height={200}/>
+            <div>
+            <iframe height="200" width="200 " src="http://karr.local:98/"></iframe>
+
+            </div>
          <br/>
         
          </Paper>
          <br/>
-         <Paper elevation={3}>
-         Console
-    
+         <Paper elevation={3} style={{'background': '#455a64'}}>
+         <CardHeader
+        style={{'background': '#b0bec5'}}
+        avatar={
+          <Avatar sx={{ bgcolor: purple[500] }} aria-label="Console">
+           <TerminalRoundedIcon/>
+          </Avatar>
+        }
+        title="H A R D W A R E"
+        subheader="CONSOLE"
+      />
+  <Typography>$</Typography>
          <br/>
          <br/>
          <br/>
