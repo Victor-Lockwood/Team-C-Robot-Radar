@@ -6,8 +6,7 @@ import os
 
 from flask import Flask, jsonify, request
 
-import ResponseClasses
-import init_db
+import data_models
 
 # creating a Flask app
 app = Flask(__name__)
@@ -18,14 +17,59 @@ app = Flask(__name__)
 # Get the current map data
 # Note: Currently has dummy data
 @app.route('/mapdata', methods=['GET', 'POST'])
-def home():
+def mapdata():
+    is_test = request.args.get('istest')
+    password = request.args.get("password")
+
+    host = "localhost"
+    if is_test or is_test is None:
+        pass
+    else:
+        host = "172.17.0.2"
+
     if request.method == 'GET':
         response = Flask.response_class()
         response.content_type = "json"
-        data = ResponseClasses.LocationResponse(1)
-        response.data = json.dumps(data, cls=ResponseClasses.LocationResponseEncoder)
 
-        init_db.db_init_test()
+        data = data_models.MapObject.get_map_objects(password)
+        response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+        return response
+    else:
+        map_obj1 = data_models.MapObject(1, "Can", 1, 5)
+        map_obj1.create(password)
+
+        map_obj2 = data_models.MapObject(1, "OurRobot", 8, 7)
+        map_obj2.create(password)
+
+        map_obj3 = data_models.MapObject(1, "OtherRobot", 4, 1)
+        map_obj3.create(password)
+
+        response = Flask.response_class()
+        response.status_code = 201
+        return response
+
+
+
+@app.route('/logs', methods=['GET', 'POST'])
+def logs():
+    is_test = request.args.get('istest')
+    password = request.args.get("password")
+
+    host = "localhost"
+    if is_test or is_test is None:
+        pass
+    else:
+        host = "172.17.0.2"
+
+    if request.method == 'GET':
+        response = Flask.response_class()
+        response.content_type = "json"
+
+        data = data_models.Log.get_logs(password, host)
+        response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+
+        log = data_models.Log(os.path.basename(__file__), "Logs retrieved from /logs GET", log_type="Event")
+        log.create(password)
         return response
 
 
@@ -45,6 +89,3 @@ if __name__ == '__main__':
     # This is important for Docker
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=True, host='0.0.0.0', port=port)
-
-
-
