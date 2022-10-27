@@ -6,4 +6,8 @@
 --the servo also moves as expected(with some jitters), all that is needed to deploy the movement for the servo is tunning the command sudo bash ./basic_servo.py in the directory "~Desktop/GoPiGo/Software/Python/Examples/Basic_Servo"
 
 --more tests shall be made and updated as we progress further
-(10/19/22)-last updated 
+(10/19/22)-last updated
+
+--To copy any files from the pi to your local computer use the following command
+$ scp hostname@ipAddress:~/directoryYouWantItIn
+ 
