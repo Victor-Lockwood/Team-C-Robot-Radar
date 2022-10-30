@@ -1,17 +1,66 @@
 # Referred to: https://www.geeksforgeeks.org/python-build-a-rest-api-using-flask/?id=discuss
 # { DEV }	-	{ YYYY/MM/DD }	-	{ MODIFICATIONS }
+# vlock     -     2022/10/30    -     Added base panoramic image functionality
 # import necessary libraries and functions
 import json
 import os
 import requests
-import traceback
+import io
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_file
+from PIL import Image
+from base64 import encodebytes
 
 import data_models
 
 # creating a Flask app
 app = Flask(__name__)
+
+
+# Referred to this tutorial:
+# https://www.tutorialspoint.com/python_pillow/Python_pillow_merging_images.htm
+@app.route('/panoramic', methods=['GET'])
+def panoramic():
+    # Get each directional image from the robot
+    # TODO: Need to get these images from the robot
+    panel_north = Image.open('panoramic-images/north.png')
+    panel_east = Image.open('panoramic-images/east.png')
+    panel_south = Image.open('panoramic-images/south.png')
+    panel_west = Image.open('panoramic-images/west.png')
+
+    # We'll load these into a list so if we for some reason add more panels
+    # we only have a couple places to modify
+    panel_list = [panel_north, panel_east, panel_south, panel_west]
+
+    # Defer to the first panel for dimensions
+    panel_width = panel_list[0].size[0]
+    panel_height = panel_list[0].size[1]
+
+    # Resize each panel if dimensions don't match
+    processed_panels = []
+
+    for panel in panel_list:
+        processed_panel = panel
+        if panel.size[0] != panel_width or panel.size[1] != panel_height:
+            processed_panel = panel.resize((panel_width, panel_height))
+        processed_panels.append(processed_panel)
+
+    num_panels = len(processed_panels)
+
+    # Instantiate the panoramic image
+    panoramic_image = Image.new('RGB', (num_panels * panel_width, panel_height))
+
+    # Stitch the panels together for the full image
+    for panel_position in range(num_panels):
+        stitch_position = panel_position * panel_width
+        panoramic_image.paste(processed_panels[panel_position], (stitch_position, 0))
+
+    # Save the new image
+    pano_filepath = "panoramic-images/full-pano.png"
+    panoramic_image.save(pano_filepath)
+
+    # Send the image home!
+    return send_file(pano_filepath, mimetype="image/png")
 
 
 # http://localhost:5000/mapdata
@@ -103,7 +152,6 @@ def test_move():
             error_log = data_models.Log(os.path.basename(__file__), str(ex), "Error")
             error_log.create(password)
         return "An error occurred - see logs"
-
 
 
 # driver function

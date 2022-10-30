@@ -2,3 +2,4 @@ __pycache__/
 .idea/
 pgadmin-robot.tar
 postgres-robot.tar
+/panoramic-images/full-pano.png
