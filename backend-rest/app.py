@@ -3,6 +3,8 @@
 # import necessary libraries and functions
 import json
 import os
+import requests
+import traceback
 
 from flask import Flask, jsonify, request
 
@@ -49,7 +51,6 @@ def mapdata():
         return response
 
 
-
 @app.route('/logs', methods=['GET', 'POST'])
 def logs():
     is_test = request.args.get('istest')
@@ -73,15 +74,36 @@ def logs():
         return response
 
 
-# BELOW ARE STUB TUTORIAL METHODS - KEEPING THEM HERE FOR LATER REFERENCE
+@app.route('/autonomous', methods=['GET', 'POST'])
+def autonomous():
+    password = request.args.get("password")
 
-# A simple function to calculate the square of a number
-# the number to be squared is sent in the URL when we use GET
-# on the terminal type: curl http://127.0.0.1:5000 / home / 10
-# this returns 100 (square of 10)
-@app.route('/home/<int:num>', methods=['GET'])
-def disp(num):
-    return jsonify({'data': num ** 2})
+    move_list = "r,r,r,r"
+    api_url = "http://karr.local:5000/autonomous/" + move_list
+    received_response = requests.get(api_url)
+
+    return "Moved"
+
+
+@app.route('/testmove', methods=['GET'])
+def test_move():
+    password = request.args.get("password")
+    move_key = request.args.get("move_key")
+
+    try:
+        api_url = "http://karr.local:5000/right"
+        response = requests.get(api_url)
+
+        return "Test Successful"
+    except Exception as ex:
+        if hasattr(ex, 'message'):
+            error_log = data_models.Log(os.path.basename(__file__), str(ex.message), "Error")
+            error_log.create(password)
+        else:
+            error_log = data_models.Log(os.path.basename(__file__), str(ex), "Error")
+            error_log.create(password)
+        return "An error occurred - see logs"
+
 
 
 # driver function
