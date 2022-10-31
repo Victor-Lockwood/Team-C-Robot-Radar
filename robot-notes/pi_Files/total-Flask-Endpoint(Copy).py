@@ -1,11 +1,27 @@
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request, send_file
 import gopigo
 import time
 from picamera import PiCamera
 from time import sleep
 from camera_pi import Camera
+from PIL import Image
 
 servo_pos = 90
+location =[2.5, 2.5]
+orientation='E'#this is necessary to know what coordinate to change
+#E will mean the pi is facing the east
+#N north
+#S south
+#W west
+#used to determine the change in location coordinates and orientation change
+def determineLocationChange(orientationChange, changeLocation = 'N'):
+    
+    orientation = orientationChange
+    #if the robot needs to change location and orientation
+    if changeLocation == 'Y':
+         if(orientation == 'E'):
+            location = [location[0], location[1]]
+    
 
 app = Flask(__name__)
 
@@ -17,44 +33,49 @@ def index():
 @app.route('/forward')
 def forward():
 	print("Forward!")
-	gopigo.fwd()	# Send the GoPiGo Forward
-	time.sleep(1)	# for 1 second.
+	gopigo.fwd(100)	# Send the GoPiGo Forward
+	sleep(2.5)
 	gopigo.stop()	# the stop the GoPiGo
-	return 'Alexabot moved forward!'
+	return 'Forward!'
 
 @app.route('/backward')
 def backward():
-	print("Backward!")
-	gopigo.bwd()	# Send the GoPiGo Backward
-	time.sleep(1)	# for 1 second
-	gopigo.stop()	# and then stop the GoPiGo.
-	return 'Backward!'
+        print("Backward!")
+        gopigo.bwd(100)	# Send the GoPiGo Backward
+        sleep(2.5)
+        #location = [location[0], location[1]]
+        gopigo.stop()	# and then stop the GoPiGo.
+        return 'Backward!'
 
 @app.route('/left')
 def left():
 	print("Left!")
-	gopigo.left()
-	time.sleep(1)
+	gopigo.turn_left_wait_for_completion(100)
+	sleep(2.5)
 	gopigo.stop()
-	return 'Left!'
+	return jsonify(['location:', location ])
 
 @app.route('/right')
 def right():
-	print("Right!")
-	gopigo.right()
-	time.sleep(1)
-	gopigo.stop()
-	return 'Right!'
+        print("Right!")
+        gopigo.turn_right_wait_for_completion(100)
+        sleep(2.5)
+        gopigo.stop()
+        return jsonify(['location:', location ])
     
-@app.route('/camera')
+@app.route('/camera', methods=['GET','POST'])
 def takePicture():
-        print("Picture Taken!")
-        camera = PiCamera()
-        camera.start_preview()
-        sleep(5)
-        camera.capture('/home/pi/Desktop/pictures/newPicture.jpg')
-        camera.stop_preview()
-        return 'Picture Taken!'
+        if request.method == 'POST':
+            print("Picture Taken!")
+            camera = PiCamera()
+            camera.start_preview()
+            sleep(5)
+            camera.capture('/home/pi/Desktop/pictures/newPicture.png')
+            camera.stop_preview()
+            #picture = Image.open('/home/pi/Desktop/pictures/newPicture.png')
+            return send_file('/home/pi/Desktop/pictures/newPicture.png', mimetype="image/png")
+        else:
+            return 'Use Post'
 
 
 @app.route('/dance')
@@ -77,21 +98,35 @@ def coffee():
 
 @app.route('/autonomous/<string:stk>')
 def autonomous(stk):
+    #need to offset by 5 to incorporate hardware differences
+    gopigo.set_left_speed(105)
+    gopigo.set_right_speed(100)
+    
     lst=[]
     lst = stk.split(",")
-    for i in lst:
+    for i in  lst:
         if(i == 'f'):
-            gopigo.fwd(100)#in cm's
-            time.sleep(.25)
+            gopigo.fwd(100)
+            #sleep(1000)
+            #gopigo.stop()
+            #time.sleep(.25)
         if(i == 'b'):
-            gopigo.bwd(100)#in cm's
-            time.sleep(.25)
+            gopigo.bwd(100)
+            #sleep(1000)
+            #gopigo.stop()
+            #time.sleep(.25)
         if(i == 'r'):
-            gopigo.turn_right_wait_for_completion(90)#in degrees
-            time.sleep(.25)
+            gopigo.turn_right_wait_for_completion(100)
+            #sleep(1000)
+            #gopigo.stop()
+            #time.sleep(.25)
         if(i == 'l'):
-            gopigo.fwd(90)#in degrees
-            time.sleep(.25)            
+            gopigo.turn_left_wait_for_completion(100)
+            #sleep(1000)
+            #gopigo.stop()
+            #time.sleep(.25)
+        sleep(2.5)
+        #gopigo.stop()
         
     return "1st value: " + str(lst)
     
