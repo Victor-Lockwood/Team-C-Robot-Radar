@@ -1,3 +1,4 @@
+
 export function dijkstra(grid, startNode, finishNode) {
   const visitedNodesInOrder = [];
   startNode.distance = 0;
@@ -5,18 +6,14 @@ export function dijkstra(grid, startNode, finishNode) {
   while (!!unvisitedNodes.length) {
     sortNodesByDistance(unvisitedNodes);
     const closestNode = unvisitedNodes.shift();
-    if (closestNode.isWall) {
-      continue;
-    }
-    if (closestNode.distance === Infinity) 
-    {
-      return visitedNodesInOrder;
-    }
+    // If we encounter a wall, we skip it.
+    if (closestNode.isWall) continue;
+    // If the closest node is at a distance of infinity,
+    // we must be trapped and should therefore stop.
+    if (closestNode.distance === Infinity) return visitedNodesInOrder;
     closestNode.isVisited = true;
     visitedNodesInOrder.push(closestNode);
-    if (closestNode === finishNode) {
-      return visitedNodesInOrder;
-    }
+    if (closestNode === finishNode) return visitedNodesInOrder;
     updateUnvisitedNeighbors(closestNode, grid);
   }
 }
@@ -36,18 +33,10 @@ function updateUnvisitedNeighbors(node, grid) {
 function getUnvisitedNeighbors(node, grid) {
   const neighbors = [];
   const { col, row } = node;
-  if (row > 0) {
-    neighbors.push(grid[row - 1][col]);
-  }
-  else if (row < grid.length - 1) {
-    neighbors.push(grid[row + 1][col]);
-  }
-  else if (col > 0) {
-    neighbors.push(grid[row][col - 1]);
-  }
-  else if (col < grid[0].length - 1) {
-    neighbors.push(grid[row][col + 1]);
-  }
+  if (row > 0) neighbors.push(grid[row - 1][col]);
+  if (row < grid.length - 1) neighbors.push(grid[row + 1][col]);
+  if (col > 0) neighbors.push(grid[row][col - 1]);
+  if (col < grid[0].length - 1) neighbors.push(grid[row][col + 1]);
   return neighbors.filter(neighbor => !neighbor.isVisited);
 }
 
@@ -61,10 +50,15 @@ function getAllNodes(grid) {
   return nodes;
 }
 
+// Backtracks from the finishNode to find the shortest path.
+// Only works when called *after* the dijkstra method above.
 export function getNodesInShortestPathOrder(finishNode) {
   const nodesInShortestPathOrder = [];
   let currentNode = finishNode;
   while (currentNode !== null) {
+    //ADURAND INSTRUCTIONS
+    console.log('Current Node: COLUMN: ' + currentNode.col + " ROW: "  + currentNode.row)
+   
     nodesInShortestPathOrder.unshift(currentNode);
     currentNode = currentNode.previousNode;
   }
