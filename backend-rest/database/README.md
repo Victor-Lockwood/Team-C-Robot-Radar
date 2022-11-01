@@ -1,8 +1,11 @@
 # Database
-The SQL in this file is meant to be run by PSQL - it will not work as 
+The SQL in this `server-backup.sql` is meant to be run by PSQL - it will not work as 
 standard SQL syntax. 
 
-Be sure to update this file when the schema changes.
+`flask-user.sql` establishes the user to be used by the Flask endpoints.  It needs to be run 
+before `server-backup.sql`.  You will get errors otherwise.
+
+Be sure to update `backup-server.sql` when the schema changes.
 
 ## When Updating
 Right-click the DB to be backed up, select `Backup`, choose the file name and
