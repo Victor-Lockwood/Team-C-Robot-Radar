@@ -5,10 +5,11 @@ import psycopg2
 
 username = "flaskuser"
 
-def get_connection(password, host, database):
+
+def get_connection(password, host, database, port=5432):
     return psycopg2.connect(
         host=host,
         database=database,
         user=username,
-        password=password)
-
+        password=password,
+        port=port)

@@ -5,6 +5,7 @@
 import json
 import os
 import requests
+import ast
 import io
 
 from flask import Flask, jsonify, request, send_file
@@ -16,6 +17,16 @@ import data_models
 # creating a Flask app
 app = Flask(__name__)
 
+@app.route('/camera', methods=['GET'])
+def camera():
+    api_url = "http://karr.local:5000/camera"
+
+    response = requests.post(api_url)
+    memory_image = io.BytesIO(response.content)
+    panoramic_image = Image.open(memory_image)
+    panoramic_image.show()
+
+    return "Success"
 
 # Referred to this tutorial:
 # https://www.tutorialspoint.com/python_pillow/Python_pillow_merging_images.htm
@@ -77,6 +88,7 @@ def mapdata():
         pass
     else:
         host = "172.17.0.2"
+        port=36000
 
     if request.method == 'GET':
         response = Flask.response_class()
@@ -105,21 +117,24 @@ def logs():
     is_test = request.args.get('istest')
     password = request.args.get("password")
 
-    host = "localhost"
-    if is_test or is_test is None:
+    call_port = 5432
+    host = 'localhost'
+
+    if ast.literal_eval(is_test) or is_test is None:
         pass
     else:
         host = "172.17.0.2"
+        call_port = 5432
 
     if request.method == 'GET':
         response = Flask.response_class()
         response.content_type = "json"
 
-        data = data_models.Log.get_logs(password, host)
+        data = data_models.Log.get_logs(password, call_port, host)
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
 
         log = data_models.Log(os.path.basename(__file__), "Logs retrieved from /logs GET", log_type="Event")
-        log.create(password)
+        log.create(password, call_port, host)
         return response
 
 

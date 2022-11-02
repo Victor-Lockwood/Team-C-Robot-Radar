@@ -6,9 +6,20 @@ import database_handler
 
 
 class Map:
-    def __init__(self):
-        print("placeholder")
+    def __init__(self, id=None, created_at=None):
+        self.id = id
+        self.created_at = created_at
 
+    def create(self, password, host="localhost", database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password, host, database)
+        cur = conn.cursor()
+
+        cur.execute('INSERT INTO "Map" ("Origin", "Message", "Type", "StackTrace")'
+                    'VALUES (%s, %s, %s, %s)',
+                    (self.origin,
+                     self.message,
+                     self.log_type,
+                     self.stack_trace))
 
 class Log:
     def __init__(self, origin, message, log_type, stack_trace="", created_at=None, id=None):
@@ -19,8 +30,8 @@ class Log:
         self.stack_trace = stack_trace
         self.id = id
 
-    def create(self, password, host="localhost", database="RobotRadarAlpha"):
-        conn = database_handler.get_connection(password, host, database)
+    def create(self, password, port=5000, host="localhost", database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password, host, database, port)
         cur = conn.cursor()
 
         cur.execute('INSERT INTO "Logs" ("Origin", "Message", "Type", "StackTrace")'
@@ -38,8 +49,8 @@ class Log:
         print("Successfully inserted a log!")
 
     @staticmethod
-    def get_logs(password, host="localhost", database="RobotRadarAlpha"):
-        conn = database_handler.get_connection(password, host, database)
+    def get_logs(password, port=5432, host="localhost", database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password, host, database, port)
         cur = conn.cursor()
 
         cur.execute('SELECT * FROM "Logs"')
