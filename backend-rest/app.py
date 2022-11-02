@@ -117,7 +117,7 @@ def logs():
     is_test = request.args.get('istest')
     password = request.args.get("password")
 
-    call_port = 5432
+    call_port = 36000
     host = 'localhost'
 
     if is_test is None or ast.literal_eval(is_test):
