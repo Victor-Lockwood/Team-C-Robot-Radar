@@ -24,9 +24,9 @@ In pgAdmin 4:
 (NOTE: the ending period is very important do not forget)
 2. Run: `docker run -dp 36000:5432 robot-radar-db`
 
-To use Postgres:
-- Run `docker exec -it <container-name> bash`
-- Run `psql -U postgres`
+### To use Postgres:
+1. Run `docker exec -it <container-name> bash`
+2. Run `psql -U postgres`
 
 Be sure to restart the container so that the database service
 starts after initialization.
@@ -35,3 +35,7 @@ You can make sure the tables were created by running `\dt` while in the PSQL she
 
 To get the Docker container's IP:
 `docker container inspect -f '{{ .NetworkSettings.IPAddress }}' <container name>`
+
+### Deployment
+1. Run `docker save -o postgres-robot.tar robot-radar-db`
+2. 
