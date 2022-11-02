@@ -120,7 +120,7 @@ def logs():
     call_port = 5432
     host = 'localhost'
 
-    if ast.literal_eval(is_test) or is_test is None:
+    if is_test is None or ast.literal_eval(is_test):
         pass
     else:
         host = "172.17.0.2"

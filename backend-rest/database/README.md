@@ -28,6 +28,9 @@ To use Postgres:
 - Run `docker exec -it <container-name> bash`
 - Run `psql -U postgres`
 
+Be sure to restart the container so that the database service
+starts after initialization.
+
 You can make sure the tables were created by running `\dt` while in the PSQL shell.
 
 To get the Docker container's IP:
