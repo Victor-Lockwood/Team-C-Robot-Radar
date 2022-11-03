@@ -115,16 +115,20 @@ def mapdata():
 @app.route('/logs', methods=['GET', 'POST'])
 def logs():
     is_test = request.args.get('istest')
+    is_remote = request.args.get('remote')
     password = request.args.get("password")
 
-    call_port = 36000
+    call_port = 5000
     host = 'localhost'
 
-    if is_test is None or ast.literal_eval(is_test):
+    if (is_test is None or ast.literal_eval(is_test)) and (is_remote is None or not ast.literal_eval(is_remote)):
         pass
+    elif is_remote:
+        host = "<REMOTE IP>"
+        call_port = 36000
     else:
         host = "172.17.0.2"
-        call_port = 5432
+        call_port = 36000
 
     if request.method == 'GET':
         response = Flask.response_class()

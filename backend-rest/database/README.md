@@ -31,11 +31,28 @@ In pgAdmin 4:
 Be sure to restart the container so that the database service
 starts after initialization.
 
-You can make sure the tables were created by running `\dt` while in the PSQL shell.
+You can make sure the tables were created by switching to the `RobotRadarAlpha`
+database (run `\connect RobotRadarAlpha`) and running `\dt` while in the PSQL shell.
+Use `\qt` to exit PSQL and then `exit` to exit bash.
 
 To get the Docker container's IP:
 `docker container inspect -f '{{ .NetworkSettings.IPAddress }}' <container name>`
 
 ### Deployment
-1. Run `docker save -o postgres-robot.tar robot-radar-db`
-2. 
+Create the images locally following this readme and the backend-rest readme, then:
+1. Run `docker save --output robot-radar-db.tar robot-radar-db`.  This outputs the
+Postgres DB into a `.tar` to be loaded onto Moxie.
+2. Run `docker save --output flask-app-backend.tar flask-app-backend`.  Same deal
+but for the Flask app.
+3. SSH into Moxie and create a directory called `robotradar`
+4. Return to terminal, enter `scp robot-radar-db.tar <user>@<REMOTE IP>:/home/<user>/robotradar`
+and follow the prompts.  Wait for the upload to finish.
+5. Enter `scp flask-app-backend.tar <user>@<REMOTE IP>:/home/<user>/robotradar`
+and follow the prompts.  Wait for the upload to finish.
+6. Return to SSH terminal, enter `docker load --input robot-radar-db.tar`
+7. Enter `docker load --input flask-app-backend.tar`
+8. Run `docker run -dp 36000:5432 robot-radar-db`, then `docker ps` and get the container ID
+9. Wait a bit then run `docker start <container id>` to restart the DB
+10. Follow the instructions in the `To use Postgres` section to verify the tables 
+were created correctly.
+11. Run `docker run -p 9823:5000 -d flask-app-backend`
