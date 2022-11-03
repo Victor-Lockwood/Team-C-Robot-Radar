@@ -1,6 +1,5 @@
 import * as React from 'react';
 import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Grid';
 import Button from '@mui/material/Button';
@@ -12,7 +11,7 @@ import GamepadRoundedIcon from '@mui/icons-material/GamepadRounded';
 import { Avatar, CardHeader } from '@mui/material';
 import { blueGrey } from '@mui/material/colors';
 
-export default function ControlGrid() {
+export default function ControlCard() {
 
   const Item = styled(Paper)(({ theme }) => ({
     ...theme.typography.body2,
