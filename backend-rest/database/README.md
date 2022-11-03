@@ -56,3 +56,5 @@ and follow the prompts.  Wait for the upload to finish.
 10. Follow the instructions in the `To use Postgres` section to verify the tables 
 were created correctly.
 11. Run `docker run -p 9823:5000 -d flask-app-backend`
+12. Hit `http://localhost:9823/logs?password=<password>&remote=True` in either Postman or your
+browser.  If it works, everything built correctly!
