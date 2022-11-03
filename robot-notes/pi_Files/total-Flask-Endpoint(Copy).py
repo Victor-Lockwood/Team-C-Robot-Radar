@@ -1,11 +1,17 @@
-from flask import Flask, render_template, Response, request, send_file
+from flask import Flask, render_template, Response, request, send_file, jsonify
 import gopigo
 import time
 from picamera import PiCamera
 from time import sleep
 from camera_pi import Camera
 from PIL import Image
+import easygopigo
+import zipfile
+import io
+import pathlib
 
+
+my_ultrasonic = easygopigo.UltraSonicSensor()
 servo_pos = 90
 location =[2.5, 2.5]
 orientation='E'#this is necessary to know what coordinate to change
@@ -14,13 +20,73 @@ orientation='E'#this is necessary to know what coordinate to change
 #S south
 #W west
 #used to determine the change in location coordinates and orientation change
-def determineLocationChange(orientationChange, changeLocation = 'N'):
+def determineLocationChange(orientationChange = 'F', command = 'N'):
+    global orientation
+    global location
+    if orientationChange == 'T':
+        print("you want to change the orientation")
+        if command == 'R':
+            if orientation == 'E':
+                orientation =='S'
+            elif orientation == 'N':
+                orientation = 'E'
+            elif orientation == 'W':
+                orientation = 'N'
+            elif orientation == 'S':
+                orientation = 'W'
+        elif command == 'L':
+            if orientation == 'E':
+                orientation = 'N'
+            elif orientation == 'N':
+                orientation = 'W'
+            elif orientation == 'W':
+                orientation = 'S'
+            elif orientation == 'S':
+                orientation = 'E'
+                
     
-    orientation = orientationChange
+    #we need to determine what the command is and based on that change the location
+    #coordinates as necessary, for example im the robot is facing north, can the backward
+    #command is called, we will drop the y value by 0.01
     #if the robot needs to change location and orientation
+    
+    if command == 'N':
+        pass
+    elif command == 'F':
+        if orientation == 'E':
+            location = [round(location[0]+ 0.01, 2), round(location[1],2)]
+        if orientation == 'N':
+            location = [round(location[0],2), round(location[1] +0.01,2)]
+        if orientation == 'W':
+            location = [round(location[0]-0.01, 2), round(location[1],2)]
+        if orientation == 'S':
+            location = [round(location[0],2), round(location[1]- 0.01,2)]
+    elif command == 'B':
+        if orientation == 'E':
+            location = [round(location[0]-0.01, 2), round(location[1],2)]
+        if orientation == 'N':
+            location = [round(location[0],2), round(location[1]- 0.01,2)]
+        if orientation == 'W':
+            location = [round(location[0]+ 0.01,2), round(location[1],2)]
+        if orientation == 'S':
+            location = [round(location[0],2), round(location[1] +0.01,2)]
+        
+            
+        
+            
+    '''
     if changeLocation == 'Y':
-         if(orientation == 'E'):
-            location = [location[0], location[1]]
+        if orientation == 'E':
+            location = [location[0]+ 0.01, location[1]]
+        elif orientation == 'S':
+            location = [location[0], location[1]- 0.01]
+        elif orientation == 'W':
+            location = [location[0]-0.01, location[1]]
+        else:
+            location = [location[0], location[1] +0.01]
+    '''
+            
+        
     
 
 app = Flask(__name__)
@@ -32,36 +98,48 @@ def index():
 
 @app.route('/forward')
 def forward():
-	print("Forward!")
-	gopigo.fwd(100)	# Send the GoPiGo Forward
-	sleep(2.5)
-	gopigo.stop()	# the stop the GoPiGo
-	return 'Forward!'
+        print("Forward!")
+        gopigo.fwd(100) # Send the GoPiGo Forward
+        determineLocationChange('F', 'F')
+        sleep(2.5)
+        print("location: ", str(location), ", orientation: ", str(orientation))
+        gopigo.stop()   # the stop the GoPiGo
+        data = my_ultrasonic.read()
+        return jsonify(['location', location , 'orientation',orientation, 'radar', data])
 
 @app.route('/backward')
 def backward():
         print("Backward!")
-        gopigo.bwd(100)	# Send the GoPiGo Backward
+        gopigo.bwd(100) # Send the GoPiGo Backward
         sleep(2.5)
-        #location = [location[0], location[1]]
-        gopigo.stop()	# and then stop the GoPiGo.
-        return 'Backward!'
+        determineLocationChange('F', 'B')
+        print("location: ", str(location), ", orientation: ", str(orientation))
+        gopigo.stop()   # and then stop the GoPiGo.
+        data = my_ultrasonic.read()
+        return jsonify(['location', location , 'orientation',orientation, 'radar', data])
+        
 
 @app.route('/left')
 def left():
-	print("Left!")
-	gopigo.turn_left_wait_for_completion(100)
-	sleep(2.5)
-	gopigo.stop()
-	return jsonify(['location:', location ])
+        print("Left!")
+        gopigo.turn_left_wait_for_completion(100)
+        sleep(2.5)
+        determineLocationChange('T', 'L')
+        print("location: ", str(location), ", orientation: ", str(orientation))
+        gopigo.stop()
+        data = my_ultrasonic.read()
+        return jsonify(['location', location , 'orientation',orientation, 'radar', data])
 
 @app.route('/right')
 def right():
         print("Right!")
         gopigo.turn_right_wait_for_completion(100)
         sleep(2.5)
+        determineLocationChange('T', 'R')
+        print("location: ", str(location), ", orientation: ", str(orientation))
         gopigo.stop()
-        return jsonify(['location:', location ])
+        data = my_ultrasonic.read()
+        return jsonify(['location', location , 'orientation',orientation, 'radar', data])
     
 @app.route('/camera', methods=['GET','POST'])
 def takePicture():
@@ -70,31 +148,87 @@ def takePicture():
             camera = PiCamera()
             camera.start_preview()
             sleep(5)
-            camera.capture('/home/pi/Desktop/pictures/newPicture.png')
+            camera.capture('/home/pi/Desktop/pictures/frontPicture.png')
+            gopigo.turn_right_wait_for_completion(100)
+            sleep(2.5)
+            camera.capture('/home/pi/Desktop/pictures/ninetyDegreesPicture.png')
+            gopigo.turn_right_wait_for_completion(100)
+            sleep(2.5)
+            camera.capture('/home/pi/Desktop/pictures/oneEightyDegreesPicture.png')
+            gopigo.turn_right_wait_for_completion(100)
+            sleep(2.5)
+            camera.capture('/home/pi/Desktop/pictures/twoSeventyDegreesPicture.png')
+            gopigo.turn_right_wait_for_completion(100)
+            sleep(2.5)
             camera.stop_preview()
-            #picture = Image.open('/home/pi/Desktop/pictures/newPicture.png')
-            return send_file('/home/pi/Desktop/pictures/newPicture.png', mimetype="image/png")
+            #we now must zip the four images together to be able to send it in one go
+            listFiles = ['/home/pi/Desktop/pictures/frontPicture.png',
+                         '/home/pi/Desktop/pictures/ninetyDegreesPicture.png',
+                         '/home/pi/Desktop/pictures/oneEightyDegreesPicture.png',
+                         '/home/pi/Desktop/pictures/twoSeventyDegreesPicture.png']
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, 'w') as zipF:
+                for file in listFiles:
+                    zipF.write(file, compress_type=zipfile.ZIP_DEFLATED)
+            data.seek(0)
+            
+            return send_file(data, mimetype='application/zip', as_attachment=True, attachment_filename='data.zip')
+            
         else:
-            return 'Use Post'
+            camera = PiCamera()
+            camera.start_preview()
+            sleep(5)
+            camera.capture('/home/pi/Desktop/pictures/frontPicture.png')
+            gopigo.turn_right_wait_for_completion(100)
+            sleep(2.5)
+            camera.capture('/home/pi/Desktop/pictures/ninetyDegreesPicture.png')
+            gopigo.turn_right_wait_for_completion(100)
+            sleep(2.5)
+            camera.capture('/home/pi/Desktop/pictures/oneEightyDegreesPicture.png')
+            gopigo.turn_right_wait_for_completion(100)
+            sleep(2.5)
+            camera.capture('/home/pi/Desktop/pictures/twoSeventyDegreesPicture.png')
+            gopigo.turn_right_wait_for_completion(100)
+            sleep(2.5)
+            camera.stop_preview()
+            listFiles = ['/home/pi/Desktop/pictures/frontPicture.png',
+                         '/home/pi/Desktop/pictures/ninetyDegreesPicture.png',
+                         '/home/pi/Desktop/pictures/oneEightyDegreesPicture.png',
+                         '/home/pi/Desktop/pictures/twoSeventyDegreesPicture.png']
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, 'w') as zipF:
+                for file in listFiles:
+                    zipF.write(file, compress_type=zipfile.ZIP_DEFLATED)
+            data.seek(0)
+            
+            return send_file(data, mimetype='application/zip', as_attachment=True, attachment_filename='data.zip')
+            
+            #return 'Use Post'
 
 
 @app.route('/dance')
 def dance():
-	print("Dance!")
-	for each in range(0,5):
-		gopigo.right()
-		time.sleep(0.25)
-		gopigo.left()
-		time.sleep(0.25)
-		gopigo.bwd()
-		time.sleep(0.25)
-	gopigo.stop()
-	return 'Dance!'
+    print("Dance!")
+    for each in range(0,5):
+        gopigo.right()
+        time.sleep(0.25)
+        gopigo.left()
+        time.sleep(0.25)
+        gopigo.bwd()
+        time.sleep(0.25)
+    gopigo.stop()
+    return 'Dance!'
 
 @app.route('/coffee')
 def coffee():
-	print("Coffee!")
-	return 'coffee!'
+    print("Coffee!")
+    return 'coffee!'
+
+@app.route('/radar')
+def radar():
+        data = my_ultrasonic.read()
+        return str(data)
+       
 
 @app.route('/autonomous/<string:stk>')
 def autonomous(stk):
@@ -107,28 +241,32 @@ def autonomous(stk):
     for i in  lst:
         if(i == 'f'):
             gopigo.fwd(100)
+            determineLocationChange('F', 'F')
             #sleep(1000)
             #gopigo.stop()
             #time.sleep(.25)
         if(i == 'b'):
             gopigo.bwd(100)
+            determineLocationChange('F', 'B')
             #sleep(1000)
             #gopigo.stop()
             #time.sleep(.25)
         if(i == 'r'):
             gopigo.turn_right_wait_for_completion(100)
+            determineLocationChange('T', 'R')
             #sleep(1000)
             #gopigo.stop()
             #time.sleep(.25)
         if(i == 'l'):
             gopigo.turn_left_wait_for_completion(100)
+            determineLocationChange('T', 'L')
             #sleep(1000)
             #gopigo.stop()
             #time.sleep(.25)
         sleep(2.5)
         #gopigo.stop()
-        
-    return "1st value: " + str(lst)
+    data = my_ultrasonic.read()
+    return jsonify(['location', location , 'orientation',orientation, 'radar', data])
     
 
 
@@ -136,19 +274,19 @@ def autonomous(stk):
 def moveServo(inp):
         global servo_pos
         if inp=='a':
-            servo_pos=servo_pos+10	# If input is 'a' move the servo forward 10 degrees.
+            servo_pos=servo_pos+10  # If input is 'a' move the servo forward 10 degrees.
         elif inp=='d':
-            servo_pos=servo_pos-10	# If the input is 'd' move the servo backward by 10 degrees.
+            servo_pos=servo_pos-10  # If the input is 'd' move the servo backward by 10 degrees.
         elif inp=='s':
-            servo_pos=90			
-		
-	#Get the servo angles back to the normal 0 to 180 degree range
+            servo_pos=90            
+        
+    #Get the servo angles back to the normal 0 to 180 degree range
         if servo_pos>180:
             servo_pos=180
         if servo_pos<0:
             servo_pos=0
-		
-        gopigo.servo(servo_pos)		# This function updates the servo with the latest positon.  Move the servo.
+        
+        gopigo.servo(servo_pos)     # This function updates the servo with the latest positon.  Move the servo.
         time.sleep(.1)
         return 'servo position: ' + str(servo_pos)
 @app.route('/liveStream')
@@ -171,6 +309,6 @@ def video_feed():
 
 
         
-	
+    
 if __name__ == '__main__':
-	app.run(debug=True, host='0.0.0.0')
+    app.run(debug=True, host='0.0.0.0')
