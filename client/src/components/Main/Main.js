@@ -1,10 +1,10 @@
 import React, { Component } from "react";
-import Node from "./Node/Node";
-import NavigationBar from "./Header/NavigationBar";
-import { dijkstra, getNodesInShortestPathOrder } from "./Algorithms/dijkstra";
+import Node from "./Djikstra/Node";
+import NavigationBar from "./Djikstra/NavigationBar";
+import { dijkstra, getNodesInShortestPathOrder } from "./Djikstra/dijkstra";
 
-const START_NODE_ROW = 9;
-const START_NODE_COL = 15;
+const START_NODE_ROW = 10;
+const START_NODE_COL = 1;
 const FINISH_NODE_ROW = 1;
 const FINISH_NODE_COL = 15;
 
@@ -122,9 +122,9 @@ export default class Main extends Component {
 
 const getInitialGrid = () => {
   const grid = [];
-  for (let row = 0; row < 10; row++) {
+  for (let row = 0; row < 20; row++) {
     const currentRow = [];
-    for (let col = 0; col < 30; col++) {
+    for (let col = 0; col < 20; col++) {
       currentRow.push(createNode(col, row));
     }
     grid.push(currentRow);

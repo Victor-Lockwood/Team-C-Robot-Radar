@@ -8,8 +8,8 @@ import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
-import InfoCard from '../components/infoCard';
 import {Routes, Route, useNavigate} from 'react-router-dom';
+import InfoCard from '../components/authentication/infoCard';
 
 
 
@@ -104,13 +104,12 @@ export default function Login() {
           </Grid>
           <Grid item xs={4}>
             <br/>
-           <InfoCard/>
+          <InfoCard/>
          </Grid>
          <Grid item xs={1}>
            
          </Grid>
           </Grid>
-      
             </center>
             <br/>
            
