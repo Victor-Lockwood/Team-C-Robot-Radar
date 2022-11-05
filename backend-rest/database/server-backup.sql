@@ -5,7 +5,7 @@
 -- Dumped from database version 15.0
 -- Dumped by pg_dump version 15.0
 
--- Started on 2022-11-01 20:33:36
+-- Started on 2022-11-04 12:29:55
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -113,7 +113,10 @@ CREATE TABLE public."MapObject" (
     "Id" integer NOT NULL,
     "CreatedAt" timestamp without time zone DEFAULT now() NOT NULL,
     "MapId" integer NOT NULL,
-    "ObjectType" public."ObjectType" NOT NULL
+    "ObjectType" public."ObjectType" NOT NULL,
+    "LocationX" integer,
+    "LocationY" integer,
+    "Direction" text
 );
 
 
@@ -225,7 +228,7 @@ COPY public."Map" ("Id", "CreatedAt") FROM stdin;
 -- Data for Name: MapObject; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public."MapObject" ("Id", "CreatedAt", "MapId", "ObjectType") FROM stdin;
+COPY public."MapObject" ("Id", "CreatedAt", "MapId", "ObjectType", "LocationX", "LocationY", "Direction") FROM stdin;
 \.
 
 
@@ -328,7 +331,7 @@ GRANT ALL ON TABLE public."Map" TO flaskuser;
 GRANT ALL ON TABLE public."MapObject" TO flaskuser;
 
 
--- Completed on 2022-11-01 20:33:36
+-- Completed on 2022-11-04 12:29:55
 
 --
 -- PostgreSQL database dump complete

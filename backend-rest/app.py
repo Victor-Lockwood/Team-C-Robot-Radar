@@ -4,18 +4,40 @@
 # import necessary libraries and functions
 import json
 import os
+import string
+
 import requests
 import ast
 import io
 
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, session
+
+import database_handler
+from flask_session import Session
 from PIL import Image
-from base64 import encodebytes
 
 import data_models
 
 # creating a Flask app
 app = Flask(__name__)
+SESSION_TYPE = 'filesystem'
+app.config.from_object(__name__)
+Session(app)
+
+
+@app.route('/initialize', methods=['GET'])
+def initialize_robot_ip():
+    session["robot_ip"] = request.remote_addr
+    return "Got IP"
+
+
+@app.route('/checkip', methods=['GET'])
+def check_ip():
+    if not "robot_ip" in session:
+        return ""
+    else:
+        return str(session["robot_ip"])
+
 
 @app.route('/camera', methods=['GET'])
 def camera():
@@ -27,6 +49,7 @@ def camera():
     panoramic_image.show()
 
     return "Success"
+
 
 # Referred to this tutorial:
 # https://www.tutorialspoint.com/python_pillow/Python_pillow_merging_images.htm
@@ -71,7 +94,9 @@ def panoramic():
     panoramic_image.save(pano_filepath)
 
     # Send the image home!
-    return send_file(pano_filepath, mimetype="image/png")
+    response = send_file(pano_filepath, mimetype="image/png")
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 # http://localhost:5000/mapdata
@@ -80,32 +105,28 @@ def panoramic():
 # Note: Currently has dummy data
 @app.route('/mapdata', methods=['GET', 'POST'])
 def mapdata():
-    is_test = request.args.get('istest')
-    password = request.args.get("password")
+    connection_info = database_handler.get_connection_info(request)
 
-    host = "localhost"
-    if is_test or is_test is None:
-        pass
-    else:
-        host = "172.17.0.2"
-        port=36000
+    password = connection_info[0]
+    host = connection_info[1]
+    call_port = connection_info[2]
 
     if request.method == 'GET':
         response = Flask.response_class()
         response.content_type = "json"
 
-        data = data_models.MapObject.get_map_objects(password)
+        data = data_models.MapObject.get_map_objects(password=password, host=host, port=call_port)
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         return response
     else:
-        map_obj1 = data_models.MapObject(1, "Can", 1, 5)
-        map_obj1.create(password)
+        map_obj1 = data_models.MapObject(map_id=1, object_type="Can", location_x=1, location_y=5)
+        map_obj1.create(password=password, host=host, port=call_port)
 
-        map_obj2 = data_models.MapObject(1, "OurRobot", 8, 7)
-        map_obj2.create(password)
+        map_obj2 = data_models.MapObject(map_id=1, object_type="OurRobot", location_x=8, location_y=7)
+        map_obj2.create(password=password, host=host, port=call_port)
 
-        map_obj3 = data_models.MapObject(1, "OtherRobot", 4, 1)
-        map_obj3.create(password)
+        map_obj3 = data_models.MapObject(map_id=1, object_type="OtherRobot", location_x=4, location_y=1)
+        map_obj3.create(password=password, host=host, port=call_port)
 
         response = Flask.response_class()
         response.status_code = 201
@@ -114,36 +135,35 @@ def mapdata():
 
 @app.route('/logs', methods=['GET', 'POST'])
 def logs():
-    is_test = request.args.get('istest')
-    is_remote = request.args.get('remote')
-    password = request.args.get("password")
+    connection_info = database_handler.get_connection_info(request)
 
-    call_port = 5000
-    host = 'localhost'
+    password = connection_info[0]
+    host = connection_info[1]
+    call_port = connection_info[2]
 
-    if (is_test is None or ast.literal_eval(is_test)) and (is_remote is None or not ast.literal_eval(is_remote)):
-        pass
-    elif is_remote:
-        host = "<REMOTE IP>"
-        call_port = 36000
-    else:
-        host = "172.17.0.2"
-        call_port = 36000
+    try:
+        if request.method == 'GET':
+            response = Flask.response_class()
+            response.content_type = "json"
 
-    if request.method == 'GET':
-        response = Flask.response_class()
-        response.content_type = "json"
+            data = data_models.Log.get_logs(password=password, host=host, port=call_port)
+            response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
 
-        data = data_models.Log.get_logs(password, call_port, host)
-        response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+            log = data_models.Log(origin=os.path.basename(__file__), message="Logs retrieved from /logs GET", log_type="Event")
+            log.create(password=password, port=call_port, host=host)
+            return response
+    except Exception as ex:
+        exception_message = get_exception_message(ex)
 
-        log = data_models.Log(os.path.basename(__file__), "Logs retrieved from /logs GET", log_type="Event")
-        log.create(password, call_port, host)
-        return response
+        error_log = data_models.Log(origin=os.path.basename(__file__), message=exception_message, log_type="Error")
+        error_log.create(password=password, host=host, port=call_port)
+
+        return "An error occurred - see logs"
 
 
 @app.route('/autonomous', methods=['GET', 'POST'])
 def autonomous():
+    # TODO: Update this to use retrieved robot IP
     password = request.args.get("password")
 
     move_list = "r,r,r,r"
@@ -155,7 +175,12 @@ def autonomous():
 
 @app.route('/testmove', methods=['GET'])
 def test_move():
-    password = request.args.get("password")
+    connection_info = database_handler.get_connection_info(request)
+
+    password = connection_info[0]
+    host = connection_info[1]
+    call_port = connection_info[2]
+
     move_key = request.args.get("move_key")
 
     try:
@@ -164,13 +189,19 @@ def test_move():
 
         return "Test Successful"
     except Exception as ex:
-        if hasattr(ex, 'message'):
-            error_log = data_models.Log(os.path.basename(__file__), str(ex.message), "Error")
-            error_log.create(password)
-        else:
-            error_log = data_models.Log(os.path.basename(__file__), str(ex), "Error")
-            error_log.create(password)
+        exception_message = get_exception_message(ex)
+
+        error_log = data_models.Log(origin=os.path.basename(__file__), message=exception_message, log_type="Error")
+        error_log.create(password=password, host=host, port=call_port)
+
         return "An error occurred - see logs"
+
+
+def get_exception_message(ex):
+    if hasattr(ex, 'message'):
+        return str(ex.message)
+    else:
+        return str(ex)
 
 
 # driver function

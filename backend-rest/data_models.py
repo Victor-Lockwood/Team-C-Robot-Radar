@@ -10,8 +10,8 @@ class Map:
         self.id = id
         self.created_at = created_at
 
-    def create(self, password, host="localhost", database="RobotRadarAlpha"):
-        conn = database_handler.get_connection(password, host, database)
+    def create(self, password, host="localhost", port=5432, database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password=password, host=host, port=port, database=database)
         cur = conn.cursor()
 
         cur.execute('INSERT INTO "Map" ("Origin", "Message", "Type", "StackTrace")'
@@ -20,6 +20,7 @@ class Map:
                      self.message,
                      self.log_type,
                      self.stack_trace))
+
 
 class Log:
     def __init__(self, origin, message, log_type, stack_trace="", created_at=None, id=None):
@@ -30,7 +31,7 @@ class Log:
         self.stack_trace = stack_trace
         self.id = id
 
-    def create(self, password, port=5000, host="localhost", database="RobotRadarAlpha"):
+    def create(self, password, host="localhost", port=5432, database="RobotRadarAlpha"):
         conn = database_handler.get_connection(password, host, database, port)
         cur = conn.cursor()
 
@@ -49,8 +50,8 @@ class Log:
         print("Successfully inserted a log!")
 
     @staticmethod
-    def get_logs(password, port=5432, host="localhost", database="RobotRadarAlpha"):
-        conn = database_handler.get_connection(password, host, database, port)
+    def get_logs(password, host="localhost", port=5432, database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password=password, host=host, database=database, port=port)
         cur = conn.cursor()
 
         cur.execute('SELECT * FROM "Logs"')
@@ -73,16 +74,16 @@ class Log:
 
 
 class MapObject:
-    def __init__(self, map_id, object_type, location_x, location_y, direction=None, created_at=None, id=None):
+    def __init__(self, map_id, object_type, location_x, location_y, direction=None, created_at=None, obj_id=None):
         self.map_id = map_id
         self.object_type = object_type
         self.location = (location_x, location_y)
         self.created_at = created_at
         self.direction = direction
-        self.id = id
+        self.obj_id = obj_id
 
-    def create(self, password, host="localhost", database="RobotRadarAlpha"):
-        conn = database_handler.get_connection(password, host, database)
+    def create(self, password, host="localhost", port=5432, database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password, host, database, port)
         cur = conn.cursor()
 
         cur.execute('INSERT INTO "MapObject" ("MapId", "ObjectType", "Direction", "LocationX", "LocationY")'
@@ -100,9 +101,24 @@ class MapObject:
 
         print("Successfully inserted a map object!")
 
+    # Update a given map object's location
+    def update_map_object_location(self, password, host="localhost", port=5432, database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password, host, database, port)
+        cur = conn.cursor()
+
+        cur.execute('UPDATE "MapObject" SET "LocationX" = %s, "LocationY" = %s WHERE "Id" = %s',
+                    (self.location[0], self.location[1], self.obj_id))
+
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        print("Successfully updated MapObject with Id %s", self.obj_id)
+
     @staticmethod
-    def get_map_objects(password, host="localhost", database="RobotRadarAlpha"):
-        conn = database_handler.get_connection(password, host, database)
+    def get_map_objects(password, host="localhost", port=5432, database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password, host, database, port)
         cur = conn.cursor()
 
         cur.execute('SELECT * FROM "MapObject"')
@@ -111,15 +127,15 @@ class MapObject:
         map_objects = list()
 
         for row in rows:
-            id = row[0]
+            obj_id = row[0]
             created_at = row[1]
             map_id = row[2]
             object_type = row[3]
-            direction = row[4]
-            location_x = row[5]
-            location_y = row[6]
+            location_x = row[4]
+            location_y = row[5]
+            direction = row[6]
 
-            map_object_record = MapObject(map_id, object_type, location_x, location_y, direction, created_at, id)
+            map_object_record = MapObject(map_id, object_type, location_x, location_y, direction, created_at, obj_id)
             map_objects.append(map_object_record)
 
         return map_objects

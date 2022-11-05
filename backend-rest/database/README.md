@@ -22,7 +22,7 @@ In pgAdmin 4:
 ## Docker Guide 
 1. Run `docker build -t robot-radar-db .`
 (NOTE: the ending period is very important do not forget)
-2. Run: `docker run -dp 36000:5432 robot-radar-db`
+2. Run: `docker run -p 36000:5432 -d robot-radar-db`
 
 ### To use Postgres:
 1. Run `docker exec -it <container-name> bash`
