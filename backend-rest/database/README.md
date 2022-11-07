@@ -38,6 +38,18 @@ Use `\qt` to exit PSQL and then `exit` to exit bash.
 To get the Docker container's IP:
 `docker container inspect -f '{{ .NetworkSettings.IPAddress }}' <container name>`
 
+### Removing Docker Images from Moxie
+SSH in first.
+#### Remove Container
+For each container:
+1. Run `docker ps`, get the id or the container name
+2. Run `docker stop <container id or name>`
+3. Run `docker rm <container id or name>`
+
+#### Remove Image
+1. Run `docker image rm robot-radar-db`
+2. Run `docker image rm flask-app-backend`
+
 ### Deployment
 Create the images locally following this readme and the backend-rest readme, then:
 1. Run `docker save --output robot-radar-db.tar robot-radar-db`.  This outputs the
@@ -45,16 +57,17 @@ Postgres DB into a `.tar` to be loaded onto Moxie.
 2. Run `docker save --output flask-app-backend.tar flask-app-backend`.  Same deal
 but for the Flask app.
 3. SSH into Moxie and create a directory called `robotradar`
+   - If the `.tar` files already exist in this directory, cd in and delete them with `rm robot-radar-db.tar` and `rm flask-app-backend.tar`
 4. Return to terminal, enter `scp robot-radar-db.tar <user>@<REMOTE IP>:/home/<user>/robotradar`
 and follow the prompts.  Wait for the upload to finish.
 5. Enter `scp flask-app-backend.tar <user>@<REMOTE IP>:/home/<user>/robotradar`
 and follow the prompts.  Wait for the upload to finish.
 6. Return to SSH terminal, enter `docker load --input robot-radar-db.tar`
 7. Enter `docker load --input flask-app-backend.tar`
-8. Run `docker run -dp 36000:5432 robot-radar-db`, then `docker ps` and get the container ID
-9. Wait a bit then run `docker start <container id>` to restart the DB
+8. Run `docker run -dp 36000:5432 robot-radar-db`, then `docker ps` and get the container ID or name
+9. Wait a bit then run `docker start <container id or name>` to restart the DB
 10. Follow the instructions in the `To use Postgres` section to verify the tables 
 were created correctly.
 11. Run `docker run -p 9823:5000 -d flask-app-backend`
-12. Hit `http://localhost:9823/logs?password=<password>&remote=True` in either Postman or your
+12. Hit `http://<REMOTE IP>:9823/logs?password=<password>&remote=True` in either Postman or your
 browser.  If it works, everything built correctly!
