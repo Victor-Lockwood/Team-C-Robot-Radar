@@ -98,7 +98,6 @@ def panoramic():
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-
 # http://localhost:5000/mapdata
 
 # Get the current map data
@@ -172,6 +171,29 @@ def autonomous():
 
     return "Moved"
 
+@app.route('/move', methods=['GET'])
+def move():
+    connection_info = database_handler.get_connection_info(request)
+
+    password = connection_info[0]
+    host = connection_info[1]
+    call_port = connection_info[2]
+
+    move_key = request.args.get("movekey")
+
+    match move_key:
+        case "W":
+            print('W pressed')
+        case "S":
+            print('S pressed')
+        case "A":
+            print('A pressed')
+        case "D":
+            print('D pressed')
+
+    return "movement complete"
+
+
 
 @app.route('/testmove', methods=['GET'])
 def test_move():
@@ -184,7 +206,7 @@ def test_move():
     move_key = request.args.get("move_key")
 
     try:
-        api_url = "http://karr.local:5000/right"
+        api_url = "<ENTER IP HERE>/right"
         response = requests.get(api_url)
 
         return "Test Successful"

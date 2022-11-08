@@ -33,6 +33,9 @@ starts after initialization.
 
 You can make sure the tables were created by switching to the `RobotRadarAlpha`
 database (run `\connect RobotRadarAlpha`) and running `\dt` while in the PSQL shell.
+
+To view columns, use `\d+ <table name>`.
+
 Use `\qt` to exit PSQL and then `exit` to exit bash.
 
 To get the Docker container's IP:
