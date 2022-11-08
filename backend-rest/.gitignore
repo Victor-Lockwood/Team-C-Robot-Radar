@@ -3,3 +3,5 @@ __pycache__/
 /panoramic-images/full-pano.png
 /flask-app-backend.tar
 /robot-radar-db.tar
+/panoramic-images/image-backup/
+/flask_session/
