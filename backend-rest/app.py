@@ -1,14 +1,12 @@
 # Referred to: https://www.geeksforgeeks.org/python-build-a-rest-api-using-flask/?id=discuss
 # { DEV }	-	{ YYYY/MM/DD }	-	{ MODIFICATIONS }
-# vlock     -     2022/10/30    -     Added base panoramic image functionality
+# vlock     -     2022/10/30    -   Added base panoramic image functionality
+# vlock     -     2022/11/07    -   (Previous updates not recorded) Further cleanup and documentation
 # import necessary libraries and functions
 import json
 import os
-import string
 
 import requests
-import ast
-import io
 
 from flask import Flask, jsonify, request, send_file, session
 
@@ -20,17 +18,22 @@ import data_models
 
 # creating a Flask app
 app = Flask(__name__)
+
+# Setup session info
 SESSION_TYPE = 'filesystem'
 app.config.from_object(__name__)
 Session(app)
 
 
+# When the robot hits this, it will save the public IP to the current session.
 @app.route('/initialize', methods=['GET'])
 def initialize_robot_ip():
     session["robot_ip"] = request.remote_addr
     return "Got IP"
 
 
+# Gets the saved public IP of the robot for the current session.
+# Returns an empty string if not available.
 @app.route('/checkip', methods=['GET'])
 def check_ip():
     if not "robot_ip" in session:
@@ -39,24 +42,18 @@ def check_ip():
         return str(session["robot_ip"])
 
 
-@app.route('/camera', methods=['GET'])
-def camera():
-    api_url = "http://karr.local:5000/camera"
-
-    response = requests.post(api_url)
-    memory_image = io.BytesIO(response.content)
-    panoramic_image = Image.open(memory_image)
-    panoramic_image.show()
-
-    return "Success"
-
-
 # Referred to this tutorial:
 # https://www.tutorialspoint.com/python_pillow/Python_pillow_merging_images.htm
+# Sends a request to the robot for pictures, then stitches the received pictures together into a panorama
+# URL PARAMS:
+# - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
+# - password    -   Password for flaskuser.
+# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# TODO: Handle zip file
+# TODO: Implement retrieval from robot
 @app.route('/panoramic', methods=['GET'])
 def panoramic():
     # Get each directional image from the robot
-    # TODO: Need to get these images from the robot
     panel_north = Image.open('panoramic-images/north.png')
     panel_east = Image.open('panoramic-images/east.png')
     panel_south = Image.open('panoramic-images/south.png')
@@ -98,10 +95,13 @@ def panoramic():
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 
-# http://localhost:5000/mapdata
 
-# Get the current map data
-# Note: Currently has dummy data
+# Returns formatted map data.
+# URL PARAMS (GET):
+# - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
+# - password    -   Password for flaskuser.
+# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# TODO: Implement POST
 @app.route('/mapdata', methods=['GET', 'POST'])
 def mapdata():
     connection_info = database_handler.get_connection_info(request)
@@ -116,6 +116,7 @@ def mapdata():
 
         data = data_models.MapObject.get_map_objects(password=password, host=host, port=call_port)
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+        response.headers.add('Access-Control-Allow-Origin', '*')
         return response
     else:
         map_obj1 = data_models.MapObject(map_id=1, object_type="Can", location_x=1, location_y=5)
@@ -129,9 +130,15 @@ def mapdata():
 
         response = Flask.response_class()
         response.status_code = 201
+        response.headers.add('Access-Control-Allow-Origin', '*')
         return response
 
 
+# Retrieves logs from the DB.
+# URL PARAMS:
+# - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
+# - password    -   Password for flaskuser.
+# - remote       -   Connect to the Docker DB on Moxie (True or False).
 @app.route('/logs', methods=['GET', 'POST'])
 def logs():
     connection_info = database_handler.get_connection_info(request)
@@ -148,8 +155,8 @@ def logs():
             data = data_models.Log.get_logs(password=password, host=host, port=call_port)
             response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
 
-            log = data_models.Log(origin=os.path.basename(__file__), message="Logs retrieved from /logs GET", log_type="Event")
-            log.create(password=password, port=call_port, host=host)
+            response.status_code = 200
+            response.headers.add('Access-Control-Allow-Origin', '*')
             return response
     except Exception as ex:
         exception_message = get_exception_message(ex)
@@ -157,13 +164,26 @@ def logs():
         error_log = data_models.Log(origin=os.path.basename(__file__), message=exception_message, log_type="Error")
         error_log.create(password=password, host=host, port=call_port)
 
-        return "An error occurred - see logs"
+        response = Flask.response_class()
+
+        response.data = "An error occurred - see logs"
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
 
 
+# Takes formatted coordinate request and converts them to move commands for the robot.
+# URL PARAMS:
+# - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
+# - password    -   Password for flaskuser.
+# - remote       -   Connect to the Docker DB on Moxie (True or False).
 @app.route('/autonomous', methods=['GET', 'POST'])
 def autonomous():
     # TODO: Update this to use retrieved robot IP
-    password = request.args.get("password")
+    connection_info = database_handler.get_connection_info(request)
+
+    password = connection_info[0]
+    host = connection_info[1]
+    call_port = connection_info[2]
 
     move_list = "r,r,r,r"
     api_url = "http://karr.local:5000/autonomous/" + move_list
@@ -171,6 +191,13 @@ def autonomous():
 
     return "Moved"
 
+
+# Takes a move character and sends the corresponding move command to the robot.
+# URL PARAMS:
+# - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
+# - password    -   Password for flaskuser.
+# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# - movekey     -   The movement keyboard key hit (W, A, S or D).
 @app.route('/move', methods=['GET'])
 def move():
     connection_info = database_handler.get_connection_info(request)
@@ -181,35 +208,23 @@ def move():
 
     move_key = request.args.get("movekey")
 
-    match move_key:
-        case "W":
-            print('W pressed')
-        case "S":
-            print('S pressed')
-        case "A":
-            print('A pressed')
-        case "D":
-            print('D pressed')
-
-    return "movement complete"
-
-
-
-@app.route('/testmove', methods=['GET'])
-def test_move():
-    connection_info = database_handler.get_connection_info(request)
-
-    password = connection_info[0]
-    host = connection_info[1]
-    call_port = connection_info[2]
-
-    move_key = request.args.get("move_key")
-
+    response = Flask.response_class()
     try:
-        api_url = "<ENTER IP HERE>/right"
-        response = requests.get(api_url)
+        match move_key:
+            case "W":
+                api_url = "<ENTER IP HERE>/forward"
+                response = requests.get(api_url)
+            case "S":
+                api_url = "<ENTER IP HERE>/backward"
+                response = requests.get(api_url)
+            case "A":
+                api_url = "<ENTER IP HERE>/left"
+                response = requests.get(api_url)
+            case "D":
+                api_url = "<ENTER IP HERE>/right"
+                response = requests.get(api_url)
 
-        return "Test Successful"
+        return response
     except Exception as ex:
         exception_message = get_exception_message(ex)
 
@@ -217,6 +232,19 @@ def test_move():
         error_log.create(password=password, host=host, port=call_port)
 
         return "An error occurred - see logs"
+
+
+# Test moving the robot over the Interwebs.
+# No URL params
+@app.route('/testrobotconnect', methods=['GET'])
+def test_robot_connect():
+    try:
+        api_url = "<ENTER IP HERE>/right"
+        response = requests.get(api_url)
+
+        return "Test connect to robot successful!"
+    except Exception as ex:
+        return "Could not reach robot."
 
 
 def get_exception_message(ex):
