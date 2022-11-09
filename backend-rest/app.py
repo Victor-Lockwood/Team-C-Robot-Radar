@@ -28,7 +28,9 @@ Session(app)
 # When the robot hits this, it will save the public IP to the current session.
 @app.route('/initialize', methods=['GET'])
 def initialize_robot_ip():
-    session["robot_ip"] = request.remote_addr
+    session["robot_ip"] = "http://" + request.remote_addr + ":5000"
+
+    print(request.remote_addr + ":5000")
     return "Got IP"
 
 
@@ -36,10 +38,17 @@ def initialize_robot_ip():
 # Returns an empty string if not available.
 @app.route('/checkip', methods=['GET'])
 def check_ip():
-    if not "robot_ip" in session:
-        return ""
-    else:
+    if "robot_ip" in session:
         return str(session["robot_ip"])
+    else:
+        return ""
+
+
+def __get_robot_ip():
+    if "robot_ip" in session:
+        return str(session["robot_ip"])
+    else:
+        return "<ENTER IP HERE>"  # Default public IP for Karr
 
 
 # Referred to this tutorial:
@@ -178,15 +187,18 @@ def logs():
 # - remote       -   Connect to the Docker DB on Moxie (True or False).
 @app.route('/autonomous', methods=['GET', 'POST'])
 def autonomous():
-    # TODO: Update this to use retrieved robot IP
     connection_info = database_handler.get_connection_info(request)
+
+    karr_ip = __get_robot_ip()
 
     password = connection_info[0]
     host = connection_info[1]
     call_port = connection_info[2]
 
+
+
     move_list = "r,r,r,r"
-    api_url = "http://karr.local:5000/autonomous/" + move_list
+    api_url = karr_ip + "/autonomous/" + move_list
     received_response = requests.get(api_url)
 
     return "Moved"
@@ -209,20 +221,24 @@ def move():
     move_key = request.args.get("movekey")
 
     response = Flask.response_class()
+    response.headers.add('Access-Control-Allow-Origin', '*')
+
+    karr_ip = __get_robot_ip()
+
     try:
         match move_key:
             case "W":
-                api_url = "<ENTER IP HERE>/forward"
-                response = requests.get(api_url)
+                api_url = karr_ip + "/forward"
+                response.data = requests.get(api_url)
             case "S":
-                api_url = "<ENTER IP HERE>/backward"
-                response = requests.get(api_url)
+                api_url = karr_ip + "/backward"
+                response.data = requests.get(api_url)
             case "A":
-                api_url = "<ENTER IP HERE>/left"
-                response = requests.get(api_url)
+                api_url = karr_ip + "/left"
+                response.data = requests.get(api_url)
             case "D":
-                api_url = "<ENTER IP HERE>/right"
-                response = requests.get(api_url)
+                api_url = karr_ip + "/right"
+                response.data = requests.get(api_url)
 
         return response
     except Exception as ex:
@@ -231,20 +247,27 @@ def move():
         error_log = data_models.Log(origin=os.path.basename(__file__), message=exception_message, log_type="Error")
         error_log.create(password=password, host=host, port=call_port)
 
-        return "An error occurred - see logs"
+        response.data = "An error occurred - see logs"
+        return response
 
 
 # Test moving the robot over the Interwebs.
 # No URL params
 @app.route('/testrobotconnect', methods=['GET'])
 def test_robot_connect():
-    try:
-        api_url = "<ENTER IP HERE>/right"
-        response = requests.get(api_url)
+    response = Flask.response_class()
+    response.headers.add('Access-Control-Allow-Origin', '*')
 
-        return "Test connect to robot successful!"
-    except Exception as ex:
-        return "Could not reach robot."
+    try:
+        karr_ip = __get_robot_ip()
+        api_url = karr_ip + "/right"
+        requests.get(api_url)
+
+        response.data = "Test connect to robot successful!"
+    except Exception:
+        response.data = "Could not reach robot."
+
+    return response
 
 
 def get_exception_message(ex):
