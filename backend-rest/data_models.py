@@ -1,6 +1,8 @@
 from json import JSONEncoder
 from datetime import date, datetime
 import psycopg2
+import database_handler
+
 
 class Map:
     def __init__(self, id=None, created_at=None):
