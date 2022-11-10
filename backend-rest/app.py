@@ -58,6 +58,7 @@ def __get_current_map_id():
     else:
         return 1
 
+
 # Referred to this tutorial:
 # https://www.tutorialspoint.com/python_pillow/Python_pillow_merging_images.htm
 # Sends a request to the robot for pictures, then stitches the received pictures together into a panorama
@@ -133,7 +134,8 @@ def mapdata():
         response = Flask.response_class()
         response.content_type = "json"
 
-        data = data_models.MapObject.get_map_objects(map_id=map_id, object_type=object_type, password=password, host=host, port=call_port)
+        data = data_models.MapObject.get_map_objects(map_id=map_id, object_type=object_type, password=password,
+                                                     host=host, port=call_port)
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
@@ -200,8 +202,6 @@ def autonomous():
     password = connection_info[0]
     host = connection_info[1]
     call_port = connection_info[2]
-
-
 
     move_list = "r,r,r,r"
     api_url = karr_ip + "/autonomous/" + move_list
@@ -270,7 +270,7 @@ def test_robot_connect():
 
     try:
         karr_ip = __get_robot_ip()
-        api_url = karr_ip + "/right"
+        api_url = karr_ip + "/right"  # TODO: Ping it instead
         requests.get(api_url)
 
         response.data = "Test connect to robot successful!"
