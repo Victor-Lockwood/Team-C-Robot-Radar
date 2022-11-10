@@ -1,6 +1,5 @@
 from json import JSONEncoder
 from datetime import date, datetime
-import psycopg2
 import database_handler
 
 
@@ -9,16 +8,23 @@ class Map:
         self.id = id
         self.created_at = created_at
 
-    def create(self, password, host="localhost", port=5432, database="RobotRadarAlpha"):
+    @staticmethod
+    def create(password, host="localhost", port=5432, database="RobotRadarAlpha"):
         conn = database_handler.get_connection(password=password, host=host, port=port, database=database)
         cur = conn.cursor()
 
-        cur.execute('INSERT INTO "Map" ("Origin", "Message", "Type", "StackTrace")'
-                    'VALUES (%s, %s, %s, %s)',
-                    (self.origin,
-                     self.message,
-                     self.log_type,
-                     self.stack_trace))
+        cur.execute('INSERT INTO "Map" DEFAULT VALUES returning "Id", "CreatedAt"')
+
+        conn.commit()
+
+        rows = cur.fetchall()
+
+        fresh_map = Map(rows[0][0], rows[0][1])
+
+        cur.close()
+        conn.close()
+
+        return fresh_map
 
 
 class Log:
@@ -116,13 +122,28 @@ class MapObject:
         print("Successfully updated MapObject with Id %s", self.obj_id)
 
     @staticmethod
-    def get_map_objects(password, host="localhost", port=5432, database="RobotRadarAlpha"):
+    def get_map_objects(password, map_id=None, object_type=None, host="localhost", port=5432, database="RobotRadarAlpha"):
         conn = database_handler.get_connection(password, host, database, port)
         cur = conn.cursor()
 
-        cur.execute('SELECT * FROM "MapObject"')
+        if (map_id is not None) and (object_type is None):
+            cur.execute('SELECT * FROM "MapObject" WHERE "MapId" = %s', map_id)
+        elif (map_id is not None) and (object_type is not None):
+            cur.execute('SELECT * FROM "MapObject" WHERE "MapId" = %s AND "ObjectType" = %s', (map_id, object_type))
+        elif (map_id is None) and (object_type is not None):
+            cur.execute('SELECT * FROM "MapObject" WHERE "ObjectType" = %s', object_type)
+        else:
+            cur.execute('SELECT * FROM "MapObject"')
+
+
         rows = cur.fetchall()
 
+        map_objects = MapObject.process_map_object_db_rows(rows)
+        return map_objects
+
+
+    @staticmethod
+    def process_map_object_db_rows(rows):
         map_objects = list()
 
         for row in rows:
@@ -134,7 +155,8 @@ class MapObject:
             location_y = row[5]
             direction = row[6]
 
-            map_object_record = MapObject(map_id, object_type, location_x, location_y, direction, created_at, obj_id)
+            map_object_record = MapObject(map_id, object_type, location_x, location_y, direction, created_at,
+                                          obj_id)
             map_objects.append(map_object_record)
 
         return map_objects

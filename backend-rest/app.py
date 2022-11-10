@@ -15,6 +15,7 @@ from flask_session import Session
 from PIL import Image
 
 import data_models
+import map_helper
 
 # creating a Flask app
 app = Flask(__name__)
@@ -50,6 +51,12 @@ def __get_robot_ip():
     else:
         return "<ENTER IP HERE>"  # Default public IP for Karr
 
+
+def __get_current_map_id():
+    if "robot_ip" in session:
+        return int(session["current_map_id"])
+    else:
+        return 1
 
 # Referred to this tutorial:
 # https://www.tutorialspoint.com/python_pillow/Python_pillow_merging_images.htm
@@ -119,27 +126,26 @@ def mapdata():
     host = connection_info[1]
     call_port = connection_info[2]
 
+    map_id = request.args.get("mapid")
+    object_type = request.args.get("objtype")
+
     if request.method == 'GET':
         response = Flask.response_class()
         response.content_type = "json"
 
-        data = data_models.MapObject.get_map_objects(password=password, host=host, port=call_port)
+        data = data_models.MapObject.get_map_objects(map_id=map_id, object_type=object_type, password=password, host=host, port=call_port)
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
     else:
-        map_obj1 = data_models.MapObject(map_id=1, object_type="Can", location_x=1, location_y=5)
-        map_obj1.create(password=password, host=host, port=call_port)
+        new_map = data_models.Map.create(password=password, host=host, port=call_port)
 
-        map_obj2 = data_models.MapObject(map_id=1, object_type="OurRobot", location_x=8, location_y=7)
-        map_obj2.create(password=password, host=host, port=call_port)
-
-        map_obj3 = data_models.MapObject(map_id=1, object_type="OtherRobot", location_x=4, location_y=1)
-        map_obj3.create(password=password, host=host, port=call_port)
+        session["current_map_id"] = new_map.id
 
         response = Flask.response_class()
         response.status_code = 201
         response.headers.add('Access-Control-Allow-Origin', '*')
+        response.data = "New Map ID: %s" % new_map.id
         return response
 
 
@@ -224,21 +230,25 @@ def move():
     response.headers.add('Access-Control-Allow-Origin', '*')
 
     karr_ip = __get_robot_ip()
+    robot_response = None
 
     try:
         match move_key:
             case "W":
                 api_url = karr_ip + "/forward"
-                response.data = requests.get(api_url)
+                robot_response = requests.get(api_url)
             case "S":
                 api_url = karr_ip + "/backward"
-                response.data = requests.get(api_url)
+                robot_response = requests.get(api_url)
             case "A":
                 api_url = karr_ip + "/left"
-                response.data = requests.get(api_url)
+                robot_response = requests.get(api_url)
             case "D":
                 api_url = karr_ip + "/right"
-                response.data = requests.get(api_url)
+                robot_response = requests.get(api_url)
+        # TODO: Get values out of response data
+        robot_direction = "W"
+        radar_reading = 4
 
         return response
     except Exception as ex:
