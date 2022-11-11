@@ -59,6 +59,12 @@ def __get_current_map_id():
         return 1
 
 
+def __get_current_direction():
+    if "current_direction" in session:
+        return str(session["current_direction"])
+    else:
+        return "E"
+
 # Referred to this tutorial:
 # https://www.tutorialspoint.com/python_pillow/Python_pillow_merging_images.htm
 # Sends a request to the robot for pictures, then stitches the received pictures together into a panorama
@@ -232,25 +238,28 @@ def move():
     karr_ip = __get_robot_ip()
     robot_response = None
 
+    orientation = __get_current_direction()
+
+    # Position is returned from robot in meters
     try:
         match move_key:
             case "W":
                 api_url = karr_ip + "/forward"
-                robot_response = requests.get(api_url)
+                robot_response = requests.get(api_url).content
             case "S":
                 api_url = karr_ip + "/backward"
-                robot_response = requests.get(api_url)
+                robot_response = requests.get(api_url).content
             case "A":
                 api_url = karr_ip + "/left"
-                robot_response = requests.get(api_url)
+                robot_response = requests.get(api_url).content
             case "D":
                 api_url = karr_ip + "/right"
-                robot_response = requests.get(api_url)
+                robot_response = requests.get(api_url).content
         # TODO: Get values out of response data
         robot_direction = "W"
         radar_reading = 4
 
-        return response
+        return robot_response
     except Exception as ex:
         exception_message = get_exception_message(ex)
 
@@ -279,6 +288,36 @@ def test_robot_connect():
 
     return response
 
+
+def process_robot_response(robot_response, password,
+                         host="localhost", call_port=5432, database="RobotRadarAlpha"):
+
+    robot_response_file = open('sample-data/robot-move-response.json')
+    robot_response = json.load(robot_response_file)
+
+    direction = robot_response.get("orientation")
+    location = robot_response.get("location")
+    radar_val = robot_response.get("radar")
+
+    robot_pos = map_helper.convert_robot_position(location)
+
+    session["current_direction"] = direction
+    session["current_robot_position"] = robot_pos
+    map_id = __get_current_map_id()
+
+    map_helper.update_robot(map_id=map_id, robot_position=robot_pos, direction=direction,
+                            password=password, host=host, port=call_port, database=database)
+
+    found_obstacle = map_helper.obstacle_detection(map_id=map_id, direction=direction,
+                                                   robot_position=robot_pos, radar_reading=radar_val)
+
+    return direction, robot_pos, radar_val, found_obstacle
+
+
+@app.route('/robotresponse', methods=['GET'])
+def foo():
+    result = process_robot_response("bleh")
+    return "bar"
 
 def get_exception_message(ex):
     if hasattr(ex, 'message'):
