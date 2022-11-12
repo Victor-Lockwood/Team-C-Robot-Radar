@@ -111,8 +111,12 @@ class MapObject:
         conn = database_handler.get_connection(password, host, database, port)
         cur = conn.cursor()
 
-        cur.execute('UPDATE "MapObject" SET "LocationX" = %s, "LocationY" = %s WHERE "Id" = %s',
-                    (self.location[0], self.location[1], self.obj_id))
+        if self.direction is not None:
+            cur.execute('UPDATE "MapObject" SET "LocationX" = %s, "LocationY" = %s, "Direction" = %s WHERE "Id" = %s',
+                        (self.location[0], self.location[1], self.direction, self.obj_id))
+        else:
+            cur.execute('UPDATE "MapObject" SET "LocationX" = %s, "LocationY" = %s WHERE "Id" = %s',
+                        (self.location[0], self.location[1], self.obj_id))
 
         conn.commit()
 
@@ -122,7 +126,8 @@ class MapObject:
         print("Successfully updated MapObject with Id %s", self.obj_id)
 
     @staticmethod
-    def get_map_objects(password, map_id=None, object_type=None, host="localhost", port=5432, database="RobotRadarAlpha"):
+    def get_map_objects(password, map_id=None, object_type=None, host="localhost", port=5432,
+                        database="RobotRadarAlpha"):
         conn = database_handler.get_connection(password, host, database, port)
         cur = conn.cursor()
 
@@ -135,12 +140,10 @@ class MapObject:
         else:
             cur.execute('SELECT * FROM "MapObject"')
 
-
         rows = cur.fetchall()
 
         map_objects = MapObject.process_map_object_db_rows(rows)
         return map_objects
-
 
     @staticmethod
     def process_map_object_db_rows(rows):

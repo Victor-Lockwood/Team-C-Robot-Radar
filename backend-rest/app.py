@@ -65,6 +65,7 @@ def __get_current_direction():
     else:
         return "E"
 
+
 # Referred to this tutorial:
 # https://www.tutorialspoint.com/python_pillow/Python_pillow_merging_images.htm
 # Sends a request to the robot for pictures, then stitches the received pictures together into a panorama
@@ -72,8 +73,6 @@ def __get_current_direction():
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
 # - remote       -   Connect to the Docker DB on Moxie (True or False).
-# TODO: Handle zip file
-# TODO: Implement retrieval from robot
 @app.route('/panoramic', methods=['GET'])
 def panoramic():
     # Get each directional image from the robot
@@ -117,6 +116,13 @@ def panoramic():
     response = send_file(pano_filepath, mimetype="image/png")
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
+
+
+# TODO: Handle zip file
+# TODO: Implement retrieval from robot, put them in the panoramic-images directory
+@app.route('/generatepano', methods=['GET'])
+def generate_panoramic():
+    return "foo"
 
 
 # Returns formatted map data.
@@ -206,18 +212,20 @@ def logs():
 @app.route('/autonomous', methods=['GET', 'POST'])
 def autonomous():
     connection_info = database_handler.get_connection_info(request)
-
-    karr_ip = __get_robot_ip()
-
     password = connection_info[0]
     host = connection_info[1]
     call_port = connection_info[2]
 
-    move_list = "r,r,r,r"
-    api_url = karr_ip + "/autonomous/" + move_list
-    received_response = requests.get(api_url)
+    karr_ip = __get_robot_ip()
+    api_url = karr_ip + "/autonomous/"
 
-    return "Moved"
+    map_id = __get_current_map_id()
+
+    process_autonomous_request(map_id=map_id, password=password, host=host, call_port=call_port)
+
+    # received_response = requests.get(api_url)
+
+    return "blahhhhh"
 
 
 # Takes a move character and sends the corresponding move command to the robot.
@@ -247,16 +255,16 @@ def move():
         match move_key:
             case "W":
                 api_url = karr_ip + "/forward"
-                #robot_response = requests.get(api_url).content
+                # robot_response = requests.get(api_url).content
             case "S":
                 api_url = karr_ip + "/backward"
-                #robot_response = requests.get(api_url).content
+                # robot_response = requests.get(api_url).content
             case "A":
                 api_url = karr_ip + "/left"
-                #robot_response = requests.get(api_url).content
+                # robot_response = requests.get(api_url).content
             case "D":
                 api_url = karr_ip + "/right"
-                #robot_response = requests.get(api_url).content
+                # robot_response = requests.get(api_url).content
 
         map_id = __get_current_map_id()
         process_robot_response(robot_response=robot_response, map_id=map_id,
@@ -266,6 +274,7 @@ def move():
                                                      host=host, port=call_port)
 
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+        response.content_type = "json"
 
         return response
         return robot_response
@@ -288,7 +297,7 @@ def test_robot_connect():
 
     try:
         karr_ip = __get_robot_ip()
-        api_url = karr_ip + "/right"  # TODO: Ping it instead
+        api_url = karr_ip + "/coffee"
         requests.get(api_url)
 
         response.data = "Test connect to robot successful!"
@@ -298,9 +307,29 @@ def test_robot_connect():
     return response
 
 
-def process_robot_response(robot_response, map_id, password,
-                         host="localhost", call_port=5432, database="RobotRadarAlpha"):
+def process_autonomous_request(map_id, password,
+                               host="localhost", call_port=5432, database="RobotRadarAlpha"):
+    dijkstra_file = open('sample-data/dijkstra-test-coordinates.json')
+    dikstra_coordinates = json.load(dijkstra_file)
 
+    coordinates = dikstra_coordinates.get("Coordinates")
+
+    robot_record_candidates = data_models.MapObject.get_map_objects(password=password, map_id=map_id,
+                                                                    object_type="OurRobot",
+                                                                    host=host, call_port=call_port, database=database)
+
+    robot_record = None
+
+    if len(robot_record_candidates > 0):
+        robot_record = robot_record_candidates[0]
+    else:
+        return False
+
+    return "foo"
+
+
+def process_robot_response(robot_response, map_id, password,
+                           host="localhost", call_port=5432, database="RobotRadarAlpha"):
     # TODO: Swap from JSON file to read-in data
     robot_response_file = open('sample-data/robot-move-response.json')
     robot_response = json.load(robot_response_file)
@@ -328,6 +357,7 @@ def process_robot_response(robot_response, map_id, password,
 def foo():
     result = process_robot_response("bleh")
     return "bar"
+
 
 def get_exception_message(ex):
     if hasattr(ex, 'message'):
