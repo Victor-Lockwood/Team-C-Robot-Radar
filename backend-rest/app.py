@@ -134,6 +134,10 @@ def mapdata():
     call_port = connection_info[2]
 
     map_id = request.args.get("mapid")
+
+    if map_id is None:
+        map_id = __get_current_map_id()
+
     object_type = request.args.get("objtype")
 
     if request.method == 'GET':
@@ -238,27 +242,32 @@ def move():
     karr_ip = __get_robot_ip()
     robot_response = None
 
-    orientation = __get_current_direction()
-
     # Position is returned from robot in meters
     try:
         match move_key:
             case "W":
                 api_url = karr_ip + "/forward"
-                robot_response = requests.get(api_url).content
+                #robot_response = requests.get(api_url).content
             case "S":
                 api_url = karr_ip + "/backward"
-                robot_response = requests.get(api_url).content
+                #robot_response = requests.get(api_url).content
             case "A":
                 api_url = karr_ip + "/left"
-                robot_response = requests.get(api_url).content
+                #robot_response = requests.get(api_url).content
             case "D":
                 api_url = karr_ip + "/right"
-                robot_response = requests.get(api_url).content
-        # TODO: Get values out of response data
-        robot_direction = "W"
-        radar_reading = 4
+                #robot_response = requests.get(api_url).content
 
+        map_id = __get_current_map_id()
+        process_robot_response(robot_response=robot_response, map_id=map_id,
+                               password=password, host=host, call_port=call_port)
+
+        data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                     host=host, port=call_port)
+
+        response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+
+        return response
         return robot_response
     except Exception as ex:
         exception_message = get_exception_message(ex)
@@ -289,9 +298,10 @@ def test_robot_connect():
     return response
 
 
-def process_robot_response(robot_response, password,
+def process_robot_response(robot_response, map_id, password,
                          host="localhost", call_port=5432, database="RobotRadarAlpha"):
 
+    # TODO: Swap from JSON file to read-in data
     robot_response_file = open('sample-data/robot-move-response.json')
     robot_response = json.load(robot_response_file)
 
@@ -303,15 +313,15 @@ def process_robot_response(robot_response, password,
 
     session["current_direction"] = direction
     session["current_robot_position"] = robot_pos
-    map_id = __get_current_map_id()
 
     map_helper.update_robot(map_id=map_id, robot_position=robot_pos, direction=direction,
                             password=password, host=host, port=call_port, database=database)
 
     found_obstacle = map_helper.obstacle_detection(map_id=map_id, direction=direction,
-                                                   robot_position=robot_pos, radar_reading=radar_val)
+                                                   robot_position=robot_pos, radar_reading=radar_val,
+                                                   password=password, host=host, port=call_port, database=database)
 
-    return direction, robot_pos, radar_val, found_obstacle
+    return found_obstacle
 
 
 @app.route('/robotresponse', methods=['GET'])

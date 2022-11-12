@@ -4,7 +4,6 @@ import database_handler
 
 def update_robot(map_id, robot_position, direction,
                  password, host="localhost", port=5432, database="RobotRadarAlpha"):
-
     candidates = data_models.MapObject.get_map_objects(
         password=password,
         map_id=map_id,
@@ -14,13 +13,20 @@ def update_robot(map_id, robot_position, direction,
         database=database
     )
 
-    # We have bigger problems if we try to update a robot that doesn't exist
-    our_robot = candidates[0]
-    our_robot.location = robot_position
-    our_robot.direction = direction
-    our_robot.update_map_object_location()
+    if len(candidates) > 0:
+        our_robot = candidates[0]
+        our_robot.location = robot_position
+        our_robot.direction = direction
+        our_robot.update_map_object_location(password=password, host=host, port=port, database=database)
+    else:
+        our_robot = data_models.MapObject(map_id=map_id, location_x=robot_position[0], location_y=robot_position[1],
+                                          object_type="OurRobot", direction=direction)
+        our_robot.create(password=password, host=host, port=port, database=database)
 
 
+# Takes a radar reading, sees if any obstacles or the other robot in the database matches
+# the position of the calculated obstacle coordinates and if so, creates a new obstacle entry and returns true.
+# Otherwise, it returns False.
 def obstacle_detection(map_id, robot_position, radar_reading, direction,
                        password, host="localhost", port=5432, database="RobotRadarAlpha"):
     potential_obstacle_coordinates = \
@@ -48,15 +54,14 @@ def obstacle_detection(map_id, robot_position, radar_reading, direction,
             # Got what we needed
             break
 
-    if found_match:
-        new_obstacle = data_models.MapObject(map_id=map_id, object_type="Obstacle",
+    if not found_match:
+        new_obstacle = data_models.MapObject(map_id=map_id, object_type="Can",
                                              location_x=p_obst_x, location_y=p_obst_y)
-        new_obstacle.create(password=password,host=host, port=port, database=database)
+        new_obstacle.create(password=password, host=host, port=port, database=database)
 
         return True
     else:
         return False
-
 
 
 # We get our position in meters, need to convert to blocks for the map.
@@ -75,7 +80,7 @@ def convert_robot_position(raw_robot_position, block_size=10):
 
 # Radar reading comes in cm
 def __convert_radar_reading(radar_reading, block_size=10):
-    return radar_reading * block_size
+    return round(radar_reading / block_size)
 
 
 # robot_position needs to be converted to blocks first
@@ -85,11 +90,11 @@ def convert_radar_coordinates(direction, robot_position, radar_reading):
     # This is to make sure we don't have any pass by reference funny business going on
     detected_position = robot_position + tuple()
 
-    if direction is "W":
+    if direction == "W":
         detected_position = (detected_position[0] - radar_blocks, detected_position[1])
-    elif direction is "E":
+    elif direction == "E":
         detected_position = (detected_position[0] + radar_blocks, detected_position[1])
-    elif direction is "N":
+    elif direction == "N":
         detected_position = (detected_position[0], detected_position[1] + radar_blocks)
     else:
         detected_position = (detected_position[0], detected_position[1] - radar_blocks)

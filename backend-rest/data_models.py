@@ -127,7 +127,7 @@ class MapObject:
         cur = conn.cursor()
 
         if (map_id is not None) and (object_type is None):
-            cur.execute('SELECT * FROM "MapObject" WHERE "MapId" = %s', map_id)
+            cur.execute('SELECT * FROM "MapObject" WHERE "MapId" = %s', [map_id])
         elif (map_id is not None) and (object_type is not None):
             cur.execute('SELECT * FROM "MapObject" WHERE "MapId" = %s AND "ObjectType" = %s', (map_id, object_type))
         elif (map_id is None) and (object_type is not None):
