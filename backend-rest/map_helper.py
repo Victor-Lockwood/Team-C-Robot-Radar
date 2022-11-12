@@ -78,7 +78,7 @@ def convert_robot_position(raw_robot_position, block_size=10):
     return robot_position
 
 
-# Radar reading comes in cm
+# Radar reading comes in cm, convert to blocks
 def __convert_radar_reading(radar_reading, block_size=10):
     return round(radar_reading / block_size)
 
