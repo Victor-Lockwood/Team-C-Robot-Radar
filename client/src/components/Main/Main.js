@@ -3,23 +3,39 @@ import Node from "./Djikstra/Node";
 import NavigationBar from "./Djikstra/NavigationBar";
 import { dijkstra, getNodesInShortestPathOrder } from "./Djikstra/dijkstra";
 
-const START_NODE_ROW = 10;
-const START_NODE_COL = 1;
-const FINISH_NODE_ROW = 1;
-const FINISH_NODE_COL = 15;
+var START_NODE_ROW = 5;
+var START_NODE_COL = 5;
+var FINISH_NODE_ROW = 1;
+var FINISH_NODE_COL = 15;
 
 export default class Main extends Component {
+
   constructor(props) {
     super(props);
     this.state = {
       grid: [],
-      mouseIsPressed: false
+      mouseIsPressed: false,
+      obstacleList: [],
+      ourRobot:[],
+      ourRobot_X: 0,
+      ourRobot_Y: 0,
+      testCoordinateX : 0
+    
     };
   }
 
   componentDidMount() {
+   fetch('http://<REMOTE IP>:9823/mapdata?password=<PASSWORD>&remote=True')
+    .then((response) => response.json())
+    .then(Main => {
+        this.setState({ obstacleList: Main });
+    })
+    console.log(this.obstacleList)
+   
     const grid = getInitialGrid();
+    
     this.setState({ grid });
+    
   }
 
   handleMouseDown(row, col) {
@@ -63,9 +79,9 @@ export default class Main extends Component {
     }
   }
 
-  visualizeDijkstra() {
+  visualizeDijkstra(X, Y) {
     const { grid } = this.state;
-    const startNode = grid[START_NODE_ROW][START_NODE_COL];
+    const startNode = grid[X][Y];
     const finishNode = grid[FINISH_NODE_ROW][FINISH_NODE_COL];
     const visitedNodesInOrder = dijkstra(grid, startNode, finishNode);
     const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode);
@@ -79,18 +95,29 @@ export default class Main extends Component {
   }
 
   render() {
+    this.state.ourRobot = this.state.obstacleList.filter((obj) => obj.object_type === "OurRobot")
+    this.state.ourRobot.map((obstacle) => (
+    this.state.ourRobot_X = obstacle.location[0],
+    this.state.ourRobot_Y = obstacle.location[1],
+    console.log("PIN", this.state.ourRobot_X, this.state.ourRobot_Y)
+))
     const { grid, mouseIsPressed } = this.state;
-
+ 
     return (
       <div>
         <NavigationBar
-          onVisiualizePressed={() => this.visualizeDijkstra()}
+          onVisiualizePressed={() => this.visualizeDijkstra(this.state.ourRobot_X , this.state.ourRobot_Y )}
           onClearPathPressed={() => this.clearPath()}
         />
-
+ <ul>
+                {this.state.obstacleList.map((obstacle) => (
+                    <li key={obstacle.map_id}>{obstacle.object_type}</li>
+                ))}
+            </ul>
         <div className="grid">
           {grid.map((row, rowIdx) => {
             return (
+       
               <div key={rowIdx}>
                 {row.map((node, nodeIdx) => {
                   const { row, col, isFinish, isStart, isWall } = node;
@@ -112,6 +139,7 @@ export default class Main extends Component {
                   );
                 })}
               </div>
+             
             );
           })}
         </div>

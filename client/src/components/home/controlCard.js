@@ -10,6 +10,8 @@ import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import GamepadRoundedIcon from '@mui/icons-material/GamepadRounded';
 import { Avatar, CardHeader } from '@mui/material';
 import { blueGrey } from '@mui/material/colors';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
 
 export default function ControlCard() {
 
@@ -19,6 +21,43 @@ export default function ControlCard() {
     textAlign: 'center',
     color: theme.palette.text.secondary,
   }));
+
+  const HandleUp = (e) => {
+      axios.get('http://<REMOTE IP>:9823/move?password=<PASSWORD>&movekey=W&remote=True')
+         .then((response) => {
+           console.log(response.data);
+         })
+         .catch((err) => {
+            console.log(err);
+         });
+ };
+ const HandleBack = (e) => {
+  axios.get('http://<REMOTE IP>:9823/move?password=<PASSWORD>&movekey=S&remote=True')
+     .then((response) => {
+       console.log(response.data);
+     })
+     .catch((err) => {
+        console.log(err);
+     });
+};
+const HandleLeft = (e) => {
+  axios.get('http://<REMOTE IP>:9823/move?password=<PASSWORD>&movekey=A&remote=True')
+     .then((response) => {
+       console.log(response.data);
+     })
+     .catch((err) => {
+        console.log(err);
+     });
+};
+const HandleRight = (e) => {
+  axios.get('http://<REMOTE IP>:9823/move?password=<PASSWORD>&movekey=D&remote=True')
+     .then((response) => {
+       console.log(response.data);
+     })
+     .catch((err) => {
+        console.log(err);
+     });
+};
   return (
     <Paper elevation={3}>
        <CardHeader
@@ -36,28 +75,33 @@ export default function ControlCard() {
     <Item elevation={0}></Item>
   </Grid>
   <Grid item xs={6} md={4}>
-  <Button variant="outlined"><ArrowUpwardRoundedIcon/></Button>
+
+<Button variant="outlined" onClick={HandleUp}><ArrowUpwardRoundedIcon/></Button>
+ 
+
+     
+ 
 
   </Grid>
   <Grid item xs={6} md={4}>
     <Item elevation={0}></Item>
   </Grid>
   <Grid item xs={6} md={4}>
-  <Button variant="outlined"><ArrowBackRoundedIcon/></Button>
+  <Button variant="outlined" onClick={HandleLeft}><ArrowBackRoundedIcon/></Button>
 
   </Grid>
   <Grid item xs={6} md={4}>
     <Item elevation={0}></Item>
   </Grid>
   <Grid item xs={6} md={4}>
-  <Button variant="outlined"><ArrowForwardRoundedIcon/></Button>
+  <Button variant="outlined" onClick={HandleRight}><ArrowForwardRoundedIcon/></Button>
 
   </Grid>
   <Grid item xs={6} md={4}>
     <Item elevation={0}></Item>
   </Grid>
   <Grid item xs={6} md={4}>
-  <Button variant="outlined"><ArrowDownwardRoundedIcon/></Button>
+  <Button variant="outlined" onClick={HandleBack}><ArrowDownwardRoundedIcon/></Button>
 
   </Grid>
   <Grid item xs={6} md={4}>

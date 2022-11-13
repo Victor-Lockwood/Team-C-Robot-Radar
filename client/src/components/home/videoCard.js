@@ -20,7 +20,7 @@ function VideoCard() {
       />
             <br/>
             <div>
-            <iframe height="200" width="200 " src="http://karr.local:98/"></iframe>
+            <iframe height="200" width="200 " src="http://karr.local:5000/liveStream/video_feed"></iframe>
 
             </div>
          <br/>

@@ -1,11 +1,20 @@
 import { Avatar, Button, CardHeader, Paper } from '@mui/material'
 import { red } from '@mui/material/colors';
-import React, { Component } from 'react'
+import React, { Component, useEffect } from 'react'
 import CameraswitchRoundedIcon from '@mui/icons-material/CameraswitchRounded';
 import VrpanoRoundedIcon from '@mui/icons-material/VrpanoRounded';
+import { Pannellum, PannellumVideo } from "pannellum-react";
 
 function PanoCard() {
-  
+     useEffect(() => {
+      fetch('http://<REMOTE IP>:9823/panoramic?password=<PASSWORD>&remote=true')
+         .then((res) => res.json())
+         .then((data) => {
+            console.log(data);         })
+         .catch((err) => {
+            console.log(err.message);
+         });
+   }, []);
     return (
         <Paper elevation={3} >
         <CardHeader
@@ -23,10 +32,21 @@ function PanoCard() {
         title="I M A G I N G"
         subheader="PANORAMIC IMAGING"
       />
-            <br/>
             <div>
-            <iframe height="200" width="200 " src="http://karr.local:98/"></iframe>
-
+            <Pannellum
+        width="100%"
+        height="400px"
+        image='http://<REMOTE IP>:9823/panoramic?password=<PASSWORD>&remote=true'
+        pitch={10}
+        yaw={180}
+        hfov={110}
+        autoLoad
+        onLoad={() => {
+            console.log("panorama loaded");
+        }}
+    >
+ 
+    </Pannellum>
             </div>
          <br/>
         
