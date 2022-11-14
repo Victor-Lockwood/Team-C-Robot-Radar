@@ -216,16 +216,21 @@ def autonomous():
     host = connection_info[1]
     call_port = connection_info[2]
 
+    delimiter = ','
+
     karr_ip = __get_robot_ip()
     api_url = karr_ip + "/autonomous/"
 
     map_id = __get_current_map_id()
 
-    process_autonomous_request(map_id=map_id, password=password, host=host, call_port=call_port)
+    move_list = process_autonomous_request(map_id=map_id, password=password, host=host, call_port=call_port)
 
+    api_url = api_url + delimiter.join(move_list)
     # received_response = requests.get(api_url)
 
-    return "blahhhhh"
+    # TODO: Send off to robot, update robot record with received response and send back new map data
+
+    return api_url
 
 
 # Takes a move character and sends the corresponding move command to the robot.
@@ -310,22 +315,24 @@ def test_robot_connect():
 def process_autonomous_request(map_id, password,
                                host="localhost", call_port=5432, database="RobotRadarAlpha"):
     dijkstra_file = open('sample-data/dijkstra-test-coordinates.json')
-    dikstra_coordinates = json.load(dijkstra_file)
+    dijkstra_coordinates = json.load(dijkstra_file)
 
-    coordinates = dikstra_coordinates.get("Coordinates")
+    coordinates = dijkstra_coordinates.get("Coordinates")
 
     robot_record_candidates = data_models.MapObject.get_map_objects(password=password, map_id=map_id,
                                                                     object_type="OurRobot",
-                                                                    host=host, call_port=call_port, database=database)
+                                                                    host=host, port=call_port, database=database)
 
     robot_record = None
 
-    if len(robot_record_candidates > 0):
+    if len(robot_record_candidates) > 0:
         robot_record = robot_record_candidates[0]
     else:
-        return False
+        []
 
-    return "foo"
+    move_list = map_helper.convert_dijkstra_to_moves(dijkstra_coordinates=coordinates, robot_record=robot_record)
+
+    return move_list
 
 
 def process_robot_response(robot_response, map_id, password,

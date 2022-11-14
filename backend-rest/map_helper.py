@@ -100,3 +100,81 @@ def convert_radar_coordinates(direction, robot_position, radar_reading):
         detected_position = (detected_position[0], detected_position[1] - radar_blocks)
 
     return detected_position
+
+
+def convert_dijkstra_to_moves(dijkstra_coordinates, robot_record):
+    # Start variables: Where the robot is right now, aka where it is starting
+    # Current variables: keep track of position when building move list
+
+    start_pos = list(robot_record.location)
+    current_pos = list(robot_record.location)
+
+    start_dir = robot_record.direction
+    current_dir = robot_record.direction
+
+    coordinates = dijkstra_coordinates
+    move_list = []
+
+    for coordinate in coordinates:
+        current_x = current_pos[0]
+        current_y = current_pos[1]
+        next_x = coordinate[0]
+        next_y = coordinate[1]
+
+        # Turn to face east
+        if next_x > current_x:
+            if current_dir == "N":
+                move_list.append("r")
+                current_dir = "E"
+            elif current_dir == "W":
+                move_list.extend(["r", "r"])
+                current_dir = "E"
+            elif current_dir == "S":
+                move_list.append("l")
+                current_dir = "E"
+
+        # Turn to face west
+        elif next_x < current_x:
+            if current_dir == "N":
+                move_list.append("l")
+                current_dir = "W"
+            elif current_dir == "E":
+                move_list.extend(["l", "l"])
+                current_dir = "W"
+            elif current_dir == "S":
+                move_list.append("r")
+                current_dir = "W"
+
+        # Turn to face north
+        elif next_y > current_y:
+            if current_dir == "E":
+                move_list.append("l")
+                current_dir = "N"
+
+            elif current_dir == "S":
+                move_list.extend(["l", "l"])
+                current_dir = "N"
+
+            elif current_dir == "W":
+                move_list.append("r")
+                current_dir = "N"
+
+        # Turn to face south
+        elif next_y < current_y:
+            if current_dir == "E":
+                move_list.append("r")
+                current_dir = "S"
+
+            elif current_dir == "N":
+                move_list.extend(["l", "l"])
+                current_dir = "S"
+
+            elif current_dir == "W":
+                move_list.append("l")
+                current_dir = "S"
+
+        move_list.append("f")
+        current_pos = coordinate
+
+    return move_list
+
