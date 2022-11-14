@@ -14,13 +14,13 @@ function VideoCard() {
            <VideocamRounded/>
           </Avatar>
         }
-        
+       // http://karr.local:5000/liveStream/video_feed
         title="I M A G I N G"
         subheader="LIVE IMAGING"
       />
             <br/>
             <div>
-            <iframe height="200" width="200 " src="http://karr.local:5000/liveStream/video_feed"></iframe>
+            <iframe height="200" width="200 " src=""></iframe>
 
             </div>
          <br/>
