@@ -260,16 +260,16 @@ def move():
         match move_key:
             case "W":
                 api_url = karr_ip + "/forward"
-                # robot_response = requests.get(api_url).content
+                robot_response = requests.get(api_url).json()
             case "S":
                 api_url = karr_ip + "/backward"
-                # robot_response = requests.get(api_url).content
+                robot_response = requests.get(api_url).json()
             case "A":
                 api_url = karr_ip + "/left"
-                # robot_response = requests.get(api_url).content
+                robot_response = requests.get(api_url).json()
             case "D":
                 api_url = karr_ip + "/right"
-                # robot_response = requests.get(api_url).content
+                robot_response = requests.get(api_url).json()
 
         map_id = __get_current_map_id()
         process_robot_response(robot_response=robot_response, map_id=map_id,
@@ -337,9 +337,8 @@ def process_autonomous_request(map_id, password,
 
 def process_robot_response(robot_response, map_id, password,
                            host="localhost", call_port=5432, database="RobotRadarAlpha"):
-    # TODO: Swap from JSON file to read-in data
-    robot_response_file = open('sample-data/robot-move-response.json')
-    robot_response = json.load(robot_response_file)
+    # robot_response_file = open('sample-data/robot-move-response.json')
+    # robot_response = json.load(robot_response_file)
 
     direction = robot_response.get("orientation")
     location = robot_response.get("location")
@@ -358,12 +357,6 @@ def process_robot_response(robot_response, map_id, password,
                                                    password=password, host=host, port=call_port, database=database)
 
     return found_obstacle
-
-
-@app.route('/robotresponse', methods=['GET'])
-def foo():
-    result = process_robot_response("bleh")
-    return "bar"
 
 
 def get_exception_message(ex):
