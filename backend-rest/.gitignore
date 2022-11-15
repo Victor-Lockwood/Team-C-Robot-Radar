@@ -5,3 +5,7 @@ __pycache__/
 /robot-radar-db.tar
 /panoramic-images/image-backup/
 /flask_session/
+/panoramic-images/frontPicture.png
+/panoramic-images/ninetyDegreesPicture.png
+/panoramic-images/oneEightyDegreesPicture.png
+/panoramic-images/twoSeventyDegreesPicture.png

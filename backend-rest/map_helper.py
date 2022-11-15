@@ -29,6 +29,10 @@ def update_robot(map_id, robot_position, direction,
 # Otherwise, it returns False.
 def obstacle_detection(map_id, robot_position, radar_reading, direction,
                        password, host="localhost", port=5432, database="RobotRadarAlpha"):
+
+    if radar_reading == 501:
+        return False
+
     potential_obstacle_coordinates = \
         convert_radar_coordinates(robot_position=robot_position, radar_reading=radar_reading, direction=direction)
 

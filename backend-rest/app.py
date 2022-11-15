@@ -5,15 +5,17 @@
 # import necessary libraries and functions
 import json
 import os
-
+import zipfile
+import shutil
 import requests
 
 from flask import Flask, jsonify, request, send_file, session
 
-import database_handler
 from flask_session import Session
 from PIL import Image
+from os.path import exists
 
+import database_handler
 import data_models
 import map_helper
 
@@ -75,11 +77,32 @@ def __get_current_direction():
 # - remote       -   Connect to the Docker DB on Moxie (True or False).
 @app.route('/panoramic', methods=['GET'])
 def panoramic():
+    image1_url = 'panoramic-images/frontPicture.png'
+    file1_exists = exists(image1_url)
+
+    image2_url = 'panoramic-images/ninetyDegreesPicture.png'
+    file2_exists = exists(image2_url)
+
+    image3_url = 'panoramic-images/oneEightyDegreesPicture.png'
+    file3_exists = exists(image3_url)
+
+    image4_url = 'panoramic-images/twoSeventyDegreesPicture.png'
+    file4_exists = exists(image4_url)
+
+    if not (file1_exists and file2_exists and file3_exists and file4_exists):
+        empty_image_fp = 'panoramic-images/empty-image.png'
+        empty_image = Image.new('RGB', (500, 500))
+        empty_image.save(empty_image_fp)
+
+        response = send_file(empty_image_fp, mimetype="image/png")
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+
     # Get each directional image from the robot
-    panel_north = Image.open('panoramic-images/north.png')
-    panel_east = Image.open('panoramic-images/east.png')
-    panel_south = Image.open('panoramic-images/south.png')
-    panel_west = Image.open('panoramic-images/west.png')
+    panel_north = Image.open(image1_url)
+    panel_east = Image.open(image2_url)
+    panel_south = Image.open(image3_url)
+    panel_west = Image.open(image4_url)
 
     # We'll load these into a list so if we for some reason add more panels
     # we only have a couple places to modify
@@ -118,11 +141,24 @@ def panoramic():
     return response
 
 
-# TODO: Handle zip file
 # TODO: Implement retrieval from robot, put them in the panoramic-images directory
 @app.route('/generatepano', methods=['GET'])
 def generate_panoramic():
-    return "foo"
+    src_dir = "panoramic-images/received-data/home/pi/Desktop/pictures"
+    dest_dir = "panoramic-images"
+
+    with zipfile.ZipFile("sample-data/data.zip", "r") as zip_ref:
+        zip_ref.extractall("panoramic-images/received-data")
+
+    files = os.listdir(src_dir)
+
+    for grabbed_file in files:
+        shutil.copy2(os.path.join(src_dir, grabbed_file), dest_dir)
+
+    response = Flask.response_class()
+    response.data = "Panoramic pictures taken and saved"
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
 
 
 # Returns formatted map data.
@@ -221,16 +257,28 @@ def autonomous():
     karr_ip = __get_robot_ip()
     api_url = karr_ip + "/autonomous/"
 
+    response = Flask.response_class()
+    response.headers.add('Access-Control-Allow-Origin', '*')
+
     map_id = __get_current_map_id()
 
     move_list = process_autonomous_request(map_id=map_id, password=password, host=host, call_port=call_port)
 
     api_url = api_url + delimiter.join(move_list)
-    # received_response = requests.get(api_url)
+    robot_response = requests.get(api_url).json()
 
-    # TODO: Send off to robot, update robot record with received response and send back new map data
+    # TODO: Test this
+    process_robot_response(robot_response=robot_response, map_id=map_id,
+                           password=password, host=host, call_port=call_port)
 
-    return api_url
+    data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                 host=host, port=call_port)
+
+    response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+    response.content_type = "json"
+
+    return response
+    return robot_response
 
 
 # Takes a move character and sends the corresponding move command to the robot.
