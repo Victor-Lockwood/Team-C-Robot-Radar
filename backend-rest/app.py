@@ -148,16 +148,16 @@ def generate_panoramic():
     karr_ip = __get_robot_ip()
     api_url = karr_ip + "/camera"
 
-    # TODO: Uncomment this, comment test data out
-    # api_response = requests.get(api_url)
-    # received_zip = zipfile.ZipFile(io.BytesIO(api_response.content))
-    # received_zip.extractall("panoramic-images/received-data")
+    api_response = requests.get(api_url)
+    received_zip = zipfile.ZipFile(io.BytesIO(api_response.content))
+    received_zip.extractall("panoramic-images/received-data")
 
     src_dir = "panoramic-images/received-data/home/pi/Desktop/pictures"
     dest_dir = "panoramic-images"
 
-    with zipfile.ZipFile("sample-data/data.zip", "r") as zip_ref:
-        zip_ref.extractall("panoramic-images/received-data")
+    # Test dara
+    # with zipfile.ZipFile("sample-data/data.zip", "r") as zip_ref:
+    #    zip_ref.extractall("panoramic-images/received-data")
 
     files = os.listdir(src_dir)
 
@@ -445,26 +445,20 @@ def process_robot_response(robot_response, map_id, password,
     return found_obstacle
 
 
+#@app.route('/get_picture', methods=['GET'])
 def update_current_camera_view():
     karr_ip = __get_robot_ip()
     api_url = karr_ip + "/liveStream"
 
     # TODO: Uncomment this, comment test data out
-    # api_response = requests.get(api_url)
-    # received_zip = zipfile.ZipFile(io.BytesIO(api_response.content))
-    # received_zip.extractall("panoramic-images/received-camera-data")
+    api_response = requests.post(api_url, stream=True)
 
-    src_dir = "panoramic-images/received-livestream-data/livestream-data/livestream-data/home/pi/Desktop/pictures"
     dest_dir = "panoramic-images/camera-data"
 
-    with zipfile.ZipFile("sample-data/livestream-data.zip", "r") as zip_ref:
-        zip_ref.extractall("panoramic-images/received-livestream-data")
+    with open(dest_dir + '/liveStream.png', 'wb') as out_file:
+        shutil.copyfileobj(api_response.raw, out_file)
 
-    files = os.listdir(src_dir)
-
-    for grabbed_file in files:
-        shutil.copy2(os.path.join(src_dir, grabbed_file), dest_dir)
-
+    return "Image retrieved"
 
 def get_exception_message(ex):
     if hasattr(ex, 'message'):
