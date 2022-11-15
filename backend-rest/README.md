@@ -24,11 +24,45 @@ Returns the IP of the robot stored in the session, if available.
 - URL Parameters
   - None
 
+
+### /generatepano
+
+Tells the robot to take a panoramic view.  Images are received as a `.zip`,
+are unzipped into `panoramic-images/received-data/...` and then the images are copied out of 
+the received file structure into the root of `panoramic-images`.
+
+#### GET
+
+- Returns
+  - `Panoramic pictures taken and saved` (string)
+- URL Parameters
+  - None
+
+
 ### /panoramic
-***UNDER CONSTRUCTION***
 
 Get a stitched together panoramic of pictures the robot takes
-facing North, South, East and West
+facing North, South, East and West.  If there are no pictures to stitch, a black 
+square picture is returned.
+
+#### GET
+- Returns
+  - Image of type `.png`
+- URL Parameters
+  - None
+
+### /current_view
+
+Get the latest image saved from the robot's PoV.  If there are no pictures to stitch, a black 
+square picture is returned.
+
+#### GET
+- Returns
+  - Image of type `.png`
+- URL Parameters
+  - None
+
+
 
 #### GET
 - Returns
@@ -41,8 +75,6 @@ facing North, South, East and West
 
 #### GET
 
-
-
 - Returns
   - JSON object of a list of MapObjects
   - Sample JSON:
@@ -52,12 +84,23 @@ facing North, South, East and West
           "map_id": 1,
           "object_type": "Can",
           "location": [
-              1,
-              5
+              31,
+              25
           ],
-          "created_at": "2022-11-04T12:41:17.564674",
+          "created_at": "2022-11-12T01:13:27.631719",
           "direction": null,
-          "obj_id": 4
+          "obj_id": 3
+      },
+      {
+          "map_id": 1,
+          "object_type": "OurRobot",
+          "location": [
+              26,
+              25
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": "E",
+          "obj_id": 1
       }
   ]
   ```
@@ -84,14 +127,40 @@ Creates a new Map and sets its id to the session variable `current_map_id`.
   - None
 
 ### /move
-***UNDER CONSTRUCTION***
 
 #### GET
 Moves the robot in the specified direction, updates its location as well as 
 saves any new obstacles detected.
 
 - Returns
-  - ***UNDER CONSTRUCTION***
+  - JSON object of a list of MapObjects
+  - Sample JSON:
+  ```json
+  [
+      {
+          "map_id": 1,
+          "object_type": "Can",
+          "location": [
+              31,
+              25
+          ],
+          "created_at": "2022-11-12T01:13:27.631719",
+          "direction": null,
+          "obj_id": 3
+      },
+      {
+          "map_id": 1,
+          "object_type": "OurRobot",
+          "location": [
+              26,
+              25
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": "E",
+          "obj_id": 1
+      }
+  ]
+  ```
 - URL Parameters
   - *movekey*
     - Key pressed for movement.  Valid values are `W` (move forward), `A` (turn left),
@@ -108,7 +177,8 @@ saves any new obstacles detected.
 ### /testrobotconnect
 
 #### GET
-Checks to see if the robot is reachable by sending a request for it to run right.
+Checks to see if the robot is reachable by sending a request to its
+`/coffee` endpoint.
 
 - Returns
   - Success:
@@ -148,10 +218,17 @@ Returns a list of JSON-formatted logs from the database.
   - Failure:
     - `An error occurred - see logs` (string)
 - URL Parameters
-  - None
+  - *istest*
+    - If this is a local endpoint meant to use a local 
+    Docker database (`True` or `False`). Optional, defaults to `False`
+  - *password*
+    - Password for `flaskuser`.
+  - *remote*
+    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    Optional, defaults to `False`.
+
 
 ### /autonomous
-***UNDER CONSTRUCTION***
 
 #### POST
 Receives a set of Dijkstra-calculated coordinates to be translated into movements
@@ -175,9 +252,43 @@ to send to the robot.
     }
   ```
 - Returns
-  - `***UNDER CONSTRUCTION***
+  - JSON object of a list of MapObjects
+  - Sample JSON:
+  ```json
+  [
+      {
+          "map_id": 1,
+          "object_type": "Can",
+          "location": [
+              31,
+              25
+          ],
+          "created_at": "2022-11-12T01:13:27.631719",
+          "direction": null,
+          "obj_id": 3
+      },
+      {
+          "map_id": 1,
+          "object_type": "OurRobot",
+          "location": [
+              26,
+              25
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": "E",
+          "obj_id": 1
+      }
+  ]
+  ```
 - URL Parameters
-  - ***UNDER CONSTRUCTION***
+  - *istest*
+    - If this is a local endpoint meant to use a local 
+    Docker database (`True` or `False`). Optional, defaults to `False`
+  - *password*
+    - Password for `flaskuser`.
+  - *remote*
+    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    Optional, defaults to `False`.
 
 ## Creating Docker Image and Testing Locally
 Make sure you have Docker installed!

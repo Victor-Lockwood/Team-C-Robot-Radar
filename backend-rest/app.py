@@ -3,6 +3,7 @@
 # vlock     -     2022/10/30    -   Added base panoramic image functionality
 # vlock     -     2022/11/07    -   (Previous updates not recorded) Further cleanup and documentation
 # import necessary libraries and functions
+import io
 import json
 import os
 import zipfile
@@ -141,9 +142,17 @@ def panoramic():
     return response
 
 
-# TODO: Implement retrieval from robot, put them in the panoramic-images directory
 @app.route('/generatepano', methods=['GET'])
 def generate_panoramic():
+
+    karr_ip = __get_robot_ip()
+    api_url = karr_ip + "/camera"
+
+    # TODO: Uncomment this, comment test data out
+    # api_response = requests.get(api_url)
+    # received_zip = zipfile.ZipFile(io.BytesIO(api_response.content))
+    # received_zip.extractall("panoramic-images/received-data")
+
     src_dir = "panoramic-images/received-data/home/pi/Desktop/pictures"
     dest_dir = "panoramic-images"
 
@@ -159,6 +168,28 @@ def generate_panoramic():
     response.data = "Panoramic pictures taken and saved"
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
+
+
+# Shows the most recently taken photo by the robot
+@app.route('/current_view', methods=['GET'])
+def get_current_view():
+    # Only uncomment this for testing
+    # update_current_camera_view()
+    picture_fp = 'panoramic-images/camera-data/liveStream.png'
+    file_exists = exists(picture_fp)
+
+    if file_exists:
+        response = send_file(picture_fp, mimetype="image/png")
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    else:
+        empty_image_fp = 'panoramic-images/empty-image.png'
+        empty_image = Image.new('RGB', (500, 500))
+        empty_image.save(empty_image_fp)
+
+        response = send_file(empty_image_fp, mimetype="image/png")
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
 
 
 # Returns formatted map data.
@@ -203,6 +234,9 @@ def mapdata():
         return response
 
 
+@app.route('/')
+
+
 # Retrieves logs from the DB.
 # URL PARAMS:
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
@@ -245,8 +279,10 @@ def logs():
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
 # - remote       -   Connect to the Docker DB on Moxie (True or False).
-@app.route('/autonomous', methods=['GET', 'POST'])
+@app.route('/autonomous', methods=['POST'])
 def autonomous():
+    dijkstra_coordinates = request.json
+
     connection_info = database_handler.get_connection_info(request)
     password = connection_info[0]
     host = connection_info[1]
@@ -262,7 +298,8 @@ def autonomous():
 
     map_id = __get_current_map_id()
 
-    move_list = process_autonomous_request(map_id=map_id, password=password, host=host, call_port=call_port)
+    move_list = process_autonomous_request(map_id=map_id, dijkstra_coordinates=dijkstra_coordinates,
+                                           password=password, host=host, call_port=call_port)
 
     api_url = api_url + delimiter.join(move_list)
     robot_response = requests.get(api_url).json()
@@ -273,12 +310,12 @@ def autonomous():
 
     data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
                                                  host=host, port=call_port)
+    update_current_camera_view()
 
     response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
     response.content_type = "json"
 
     return response
-    return robot_response
 
 
 # Takes a move character and sends the corresponding move command to the robot.
@@ -329,8 +366,9 @@ def move():
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.content_type = "json"
 
+        update_current_camera_view()
+
         return response
-        return robot_response
     except Exception as ex:
         exception_message = get_exception_message(ex)
 
@@ -360,10 +398,10 @@ def test_robot_connect():
     return response
 
 
-def process_autonomous_request(map_id, password,
+def process_autonomous_request(map_id, password, dijkstra_coordinates,
                                host="localhost", call_port=5432, database="RobotRadarAlpha"):
-    dijkstra_file = open('sample-data/dijkstra-test-coordinates.json')
-    dijkstra_coordinates = json.load(dijkstra_file)
+    # dijkstra_file = open('sample-data/dijkstra-test-coordinates.json')
+    # dijkstra_coordinates = json.load(dijkstra_file)
 
     coordinates = dijkstra_coordinates.get("Coordinates")
 
@@ -405,6 +443,27 @@ def process_robot_response(robot_response, map_id, password,
                                                    password=password, host=host, port=call_port, database=database)
 
     return found_obstacle
+
+
+def update_current_camera_view():
+    karr_ip = __get_robot_ip()
+    api_url = karr_ip + "/liveStream"
+
+    # TODO: Uncomment this, comment test data out
+    # api_response = requests.get(api_url)
+    # received_zip = zipfile.ZipFile(io.BytesIO(api_response.content))
+    # received_zip.extractall("panoramic-images/received-camera-data")
+
+    src_dir = "panoramic-images/received-livestream-data/livestream-data/livestream-data/home/pi/Desktop/pictures"
+    dest_dir = "panoramic-images/camera-data"
+
+    with zipfile.ZipFile("sample-data/livestream-data.zip", "r") as zip_ref:
+        zip_ref.extractall("panoramic-images/received-livestream-data")
+
+    files = os.listdir(src_dir)
+
+    for grabbed_file in files:
+        shutil.copy2(os.path.join(src_dir, grabbed_file), dest_dir)
 
 
 def get_exception_message(ex):

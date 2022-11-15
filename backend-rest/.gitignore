@@ -9,3 +9,7 @@ __pycache__/
 /panoramic-images/ninetyDegreesPicture.png
 /panoramic-images/oneEightyDegreesPicture.png
 /panoramic-images/twoSeventyDegreesPicture.png
+/panoramic-images/received-data/
+/panoramic-images/empty-image.png
+/panoramic-images/camera-data/liveStream.png
+/panoramic-images/received-livestream-data
