@@ -144,7 +144,6 @@ def panoramic():
 
 @app.route('/generatepano', methods=['GET'])
 def generate_panoramic():
-
     karr_ip = __get_robot_ip()
     api_url = karr_ip + "/camera"
 
@@ -234,7 +233,29 @@ def mapdata():
         return response
 
 
-@app.route('/')
+@app.route('/other_robot', methods=['POST'])
+def other_robot():
+    other_robot_json = request.json
+    connection_info = database_handler.get_connection_info(request)
+    password = connection_info[0]
+    host = connection_info[1]
+    call_port = connection_info[2]
+
+    response = Flask.response_class()
+    response.headers.add('Access-Control-Allow-Origin', '*')
+
+    map_id = __get_current_map_id()
+
+    process_other_robot_request(robot_response=other_robot_json, map_id=map_id,
+                                password=password, host=host, call_port=call_port)
+
+    data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                 host=host, port=call_port)
+
+    response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+    response.content_type = "json"
+
+    return response
 
 
 # Retrieves logs from the DB.
@@ -304,7 +325,6 @@ def autonomous():
     api_url = api_url + delimiter.join(move_list)
     robot_response = requests.get(api_url).json()
 
-    # TODO: Test this
     process_robot_response(robot_response=robot_response, map_id=map_id,
                            password=password, host=host, call_port=call_port)
 
@@ -421,6 +441,25 @@ def process_autonomous_request(map_id, password, dijkstra_coordinates,
     return move_list
 
 
+def process_other_robot_request(robot_response, map_id, password,
+                                host="localhost", call_port=5432, database="RobotRadarAlpha"):
+    direction = robot_response.get("orientation")
+    location = robot_response.get("location")
+    radar_val = robot_response.get("radar")
+
+    robot_pos = map_helper.convert_robot_position(location)
+
+    map_helper.update_other_robot(map_id=map_id, robot_position=robot_pos, direction=direction,
+                                  password=password, host=host, port=call_port, database=database)
+
+
+    found_obstacle = map_helper.obstacle_detection(map_id=map_id, direction=direction,
+                                                   robot_position=robot_pos, radar_reading=radar_val,
+                                                   password=password, host=host, port=call_port, database=database)
+
+    return found_obstacle
+
+
 def process_robot_response(robot_response, map_id, password,
                            host="localhost", call_port=5432, database="RobotRadarAlpha"):
     # robot_response_file = open('sample-data/robot-move-response.json')
@@ -445,12 +484,11 @@ def process_robot_response(robot_response, map_id, password,
     return found_obstacle
 
 
-#@app.route('/get_picture', methods=['GET'])
+# @app.route('/get_picture', methods=['GET'])
 def update_current_camera_view():
     karr_ip = __get_robot_ip()
     api_url = karr_ip + "/liveStream"
 
-    # TODO: Uncomment this, comment test data out
     api_response = requests.post(api_url, stream=True)
 
     dest_dir = "panoramic-images/camera-data"
@@ -459,6 +497,7 @@ def update_current_camera_view():
         shutil.copyfileobj(api_response.raw, out_file)
 
     return "Image retrieved"
+
 
 def get_exception_message(ex):
     if hasattr(ex, 'message'):

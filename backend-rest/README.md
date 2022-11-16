@@ -1,5 +1,14 @@
 # Backend Rest
 
+## Creating Docker Image and Testing Locally
+Make sure you have Docker installed!
+
+To get testing:
+1. Run `docker build -t flask-app-backend . `
+2. Run `docker run -p 9823:5000 -d flask-app-backend`
+3. Hit `http://localhost:9823/logs?password=<password>&istest=False` in either Postman or your
+browser.  If it works, everything built correctly!
+
 ## API Specification
 
 ### /initialize
@@ -290,11 +299,119 @@ to send to the robot.
     - Connect to the Docker DB on Moxie (`True` or `False`).  
     Optional, defaults to `False`.
 
-## Creating Docker Image and Testing Locally
-Make sure you have Docker installed!
 
-To get testing:
-1. Run `docker build -t flask-app-backend . `
-2. Run `docker run -p 9823:5000 -d flask-app-backend`
-3. Hit `http://localhost:9823/logs?password=<password>&istest=False` in either Postman or your
-browser.  If it works, everything built correctly!
+### /move
+
+#### GET
+Moves the robot in the specified direction, updates its location as well as 
+saves any new obstacles detected.
+
+- Returns
+  - JSON object of a list of MapObjects
+  - Sample JSON:
+  ```json
+  [
+      {
+          "map_id": 1,
+          "object_type": "Can",
+          "location": [
+              31,
+              25
+          ],
+          "created_at": "2022-11-12T01:13:27.631719",
+          "direction": null,
+          "obj_id": 3
+      },
+      {
+          "map_id": 1,
+          "object_type": "OurRobot",
+          "location": [
+              26,
+              25
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": "E",
+          "obj_id": 1
+      }
+  ]
+  ```
+- URL Parameters
+  - *movekey*
+    - Key pressed for movement.  Valid values are `W` (move forward), `A` (turn left),
+    `S` (move backward) or `D` (turn right).  
+  - *istest*
+    - If this is a local endpoint meant to use a local 
+    Docker database (`True` or `False`). Optional, defaults to `False`
+  - *password*
+    - Password for `flaskuser`.
+  - *remote*
+    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    Optional, defaults to `False`.
+
+### /other_robot
+
+#### POST
+Endpoint for the other robot team to send their updated position and current radar reading to.
+
+- Request Body Structure 
+  ```json
+  {
+      "location": [
+          3,
+          2
+      ],
+      "orientation": "E",
+      "radar": 48
+  }
+  ```
+    - `location` should have both coordinate values in meters
+    - `radar` is measured in centimeters
+- Returns
+  - JSON object of a list of MapObjects
+  - Sample JSON:
+  ```json
+  [
+    {
+        "map_id": 1,
+        "object_type": "OurRobot",
+        "location": [
+            14,
+            1
+        ],
+        "created_at": "2022-11-12T00:43:29.532003",
+        "direction": "E",
+        "obj_id": 1
+    },
+    {
+        "map_id": 1,
+        "object_type": "Can",
+        "location": [
+            35,
+            20
+        ],
+        "created_at": "2022-11-15T19:31:31.705408",
+        "direction": null,
+        "obj_id": 10
+    },
+    {
+        "map_id": 1,
+        "object_type": "OtherRobot",
+        "location": [
+            30,
+            20
+        ],
+        "created_at": "2022-11-15T19:31:31.643092",
+        "direction": "E",
+        "obj_id": 9
+    }
+  ]
+  ```
+- URL Parameters
+  - *istest*
+    - If this is a local endpoint meant to use a local 
+    Docker database (`True` or `False`). Optional, defaults to `False`
+  - *password*
+    - Password for `flaskuser`.
+  - *remote*
+    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    Optional, defaults to `False`.

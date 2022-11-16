@@ -24,12 +24,33 @@ def update_robot(map_id, robot_position, direction,
         our_robot.create(password=password, host=host, port=port, database=database)
 
 
+def update_other_robot(map_id, robot_position, direction,
+                       password, host="localhost", port=5432, database="RobotRadarAlpha"):
+    candidates = data_models.MapObject.get_map_objects(
+        password=password,
+        map_id=map_id,
+        object_type="OtherRobot",
+        host=host,
+        port=port,
+        database=database
+    )
+
+    if len(candidates) > 0:
+        other_robot = candidates[0]
+        other_robot.location = robot_position
+        other_robot.direction = direction
+        other_robot.update_map_object_location(password=password, host=host, port=port, database=database)
+    else:
+        other_robot = data_models.MapObject(map_id=map_id, location_x=robot_position[0], location_y=robot_position[1],
+                                            object_type="OtherRobot", direction=direction)
+        other_robot.create(password=password, host=host, port=port, database=database)
+
+
 # Takes a radar reading, sees if any obstacles or the other robot in the database matches
 # the position of the calculated obstacle coordinates and if so, creates a new obstacle entry and returns true.
 # Otherwise, it returns False.
 def obstacle_detection(map_id, robot_position, radar_reading, direction,
                        password, host="localhost", port=5432, database="RobotRadarAlpha"):
-
     if radar_reading == 501:
         return False
 
@@ -181,4 +202,3 @@ def convert_dijkstra_to_moves(dijkstra_coordinates, robot_record):
         current_pos = coordinate
 
     return move_list
-
