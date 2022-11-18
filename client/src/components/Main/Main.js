@@ -2,44 +2,87 @@ import Node from "./Djikstra/Node";
 import NavigationBar from "./Djikstra/NavigationBar";
 import { dijkstra, getNodesInShortestPathOrder } from "./Djikstra/dijkstra";
 import React, { useState, useEffect } from 'react';
-import axios from "axios";
-
-var START_NODE_ROW = 5;
-var START_NODE_COL = 5;
-var FINISH_NODE_ROW = 1;
-var FINISH_NODE_COL = 15;
+import { Button } from "@mui/material";
 
 export default function Main() {
   const [ourRobotX, setOurRobotX] = useState(0);
   const [ourRobotY, setOurRobotY] = useState(0);
-  axios.get('http://<REMOTE IP>:9823/mapdata?password=<PASSWORD>&remote=True')
-  .then((response) => {
-    for(let i = 0; i < response.data.length; i++){
-      if(response.data[i].object_type == 'OurRobot'){
-        setOurRobotX(response.data[i].location[0])
-        setOurRobotY(response.data[i].location[1])
-        setGrid(getInitialGrid())
+  const [rawMap, setRawMap]  = useState([]);
+  const [grid, setGrid] = useState([]);
 
-      } else {
-        setGrid(getInitialGrid())
-        handleMouseDown(response.data[i].location[0], response.data[i].location[1])
-      }
+var FINISH_NODE_ROW = 1;
+var FINISH_NODE_COL = 9;
 
-    }
+const postDjikstra = () =>  {
+    
+  // Send data to the backend via POST
+  fetch('http://<REMOTE IP>:9823/autonomous?password=<PASSWORD>&remote=True', {  // Enter your IP address here
+
+    method: 'POST', 
+    body: JSON.stringify(
+      {
+        "Coordinates":
+         [
+            [15, 1],
+            [15, 2],
+            [15, 3],
+            [15, 4],
+            [15, 5],
+            [15, 6],
+            [15, 7],
+            [15, 8],
+            [15, 9]
+        ]
+     }
+    ) 
+
   })
-  .catch((err) => {
-     console.log(err);
-  });
   
+}
 
+const fetchMap = () => {
+  fetch("http://<REMOTE IP>:9823/mapdata?password=<PASSWORD>&remote=True")
+    .then((response) => response.json())
+    .then((response) => {
+      for (let i = 0; i < response.length; i++) {
+        setRawMap(response)
+        if(response[i].object_type == "OurRobot"){
+          setOurRobotX(response[i].location[0])
+          setOurRobotY(response[i].location[1])
+        }
+        
+      }
+    }).then(setGrid(getObstacleGrid(rawMap)))
+    .catch(() => {
+      console.log("ERROR");
+    });
+  }
   const getInitialGrid = () => {
     const grid = [];
-    for (let row = 0; row < 20; row++) {
+    for (let row = 0; row < 11; row++) {
       const currentRow = [];
-      for (let col = 0; col < 20; col++) {
+      for (let col = 0; col < 11; col++) {
         currentRow.push(createNode(col, row));
       }
       grid.push(currentRow);
+    }
+    return grid;
+  };
+  const getObstacleGrid = (rawMap) => {
+    const grid = [];
+    for (let row = 0; row < 11; row++) {
+      const currentRow = [];
+      for (let col = 0; col < 11; col++) {
+        currentRow.push(createNode(col, row));
+      }
+      grid.push(currentRow);
+    }
+    console.log(rawMap)
+    for (let i = 0; i < rawMap.length ; i++) {
+      if(rawMap.object_type != "OurRobot"){
+        const newGrid = getNewGridWithWallToggled(grid, rawMap[i].location[0], rawMap[i].location[1]);
+    setGrid(newGrid);
+      }
     }
     return grid;
   };
@@ -55,75 +98,11 @@ export default function Main() {
       previousNode: null
     };
   };
-  
-  //inital state for hooks
-  const [grid, setGrid] = useState([]);
-  const [mouseIsPressed, setmouseIsPressed] = useState(false);
-  const [obstacleList, setObstacleList] = useState([]);
-  const [test, setTest] = useState(1);
  
   useEffect(() => {
-    const fetchData = async () => {
-      const result = await axios(
-        'http://<REMOTE IP>:9823/mapdata?password=<PASSWORD>&remote=True',
-      );
-      for(let i = 0; i < result.data.length; i++){
-        if(result.data[i].object_type == 'OurRobot'){
-          setOurRobotX(result.data[i].location[0])
-          setOurRobotY(result.data[i].location[1])
-          setGrid(getInitialGrid())
-
-        } else {
-          setGrid(getInitialGrid())
-          handleMouseDown(result.data[i].location[0], result.data[i].location[1])
-        }
-
-      }
-    
-      //console.log(result.data[0]);
-    };
-
-    fetchData();
+    setGrid(getInitialGrid())
   }, []);
-
-
-  // grid: [],
-  // mouseIsPressed: false,
-  // obstacleList: [],
-  // ourRobot:[],
-  // ourRobot_X: 0,
-  // ourRobot_Y: 0,
-  // testCoordinateX : 0
-
-
-  //  fetch('http://<REMOTE IP>:9823/mapdata?password=<PASSWORD>&remote=True')
-  //   .then((response) => response.json())
-  //   .then(Main => {
-  //       this.setState({ obstacleList: Main });
-  //   })
-  //   console.log(this.obstacleList)
-   
-  //   const grid = getInitialGrid();
-    
-  //   this.setState({ grid });
-    
-
-  function handleMouseDown(row, col) {
-    const newGrid = getNewGridWithWallToggled(grid, row, col);
-    setGrid(newGrid);
-    setmouseIsPressed(true);
-  }
-
-  function handleMouseEnter(row, col) {
-    if (!mouseIsPressed) return;
-    const newGrid = getNewGridWithWallToggled(grid, row, col);
-    setGrid(newGrid)
-  }
-
-  function handleMouseUp() {
-    setmouseIsPressed(false);
-  }
-
+ 
   function animateDijkstra(visitedNodesInOrder, nodesInShortestPathOrder) {
     for (let i = 0; i <= visitedNodesInOrder.length; i++) {
       if (i === visitedNodesInOrder.length) {
@@ -175,25 +154,15 @@ export default function Main() {
     return newGrid;
   };
   
-//     this.state.ourRobot = this.state.obstacleList.filter((obj) => obj.object_type === "OurRobot")
-//     this.state.ourRobot.map((obstacle) => (
-//     this.state.ourRobot_X = obstacle.location[0],
-//     this.state.ourRobot_Y = obstacle.location[1],
-//     console.log("PIN", this.state.ourRobot_X, this.state.ourRobot_Y)
-// ))
- 
     return (
       <div>
-
         <NavigationBar
           onVisiualizePressed={() => visualizeDijkstra(ourRobotX , ourRobotY )}
           onClearPathPressed={() => clearPath()}
+          getCoordinates={() => fetchMap()}
+          postCoordinates={() => postDjikstra()}
         />
- <ul>
-                {obstacleList.map((obstacle) => (
-                    <li key={obstacle.map_id}>{obstacle.object_type}</li>
-                ))}
-            </ul>
+ <Button onClick={postDjikstra}>DEMO</Button>
         <div className="grid">
           {grid.map((row, rowIdx) => {
             return (
@@ -208,12 +177,6 @@ export default function Main() {
                       isFinish={isFinish}
                       isStart={isStart}
                       isWall={isWall}
-                      mouseIsPressed={mouseIsPressed}
-                      onMouseDown={(row, col) => handleMouseDown(row, col)}
-                      onMouseEnter={(row, col) =>
-                        handleMouseEnter(row, col)
-                      }
-                      onMouseUp={() => handleMouseUp()}
                       row={row}
                     ></Node>
                   );
