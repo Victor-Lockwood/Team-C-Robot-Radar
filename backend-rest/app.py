@@ -154,7 +154,7 @@ def generate_panoramic():
     src_dir = "panoramic-images/received-data/home/pi/Desktop/pictures"
     dest_dir = "panoramic-images"
 
-    # Test dara
+    # Test data
     # with zipfile.ZipFile("sample-data/data.zip", "r") as zip_ref:
     #    zip_ref.extractall("panoramic-images/received-data")
 
@@ -276,7 +276,7 @@ def logs():
             response = Flask.response_class()
             response.content_type = "json"
 
-            data = data_models.Log.get_logs(password=password, host=host, port=call_port)
+            data = data_models.Log.get_latest_logs(password=password, host=host, port=call_port)
             response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
 
             response.status_code = 200
@@ -357,8 +357,23 @@ def move():
     response = Flask.response_class()
     response.headers.add('Access-Control-Allow-Origin', '*')
 
+    map_id = __get_current_map_id()
+
     karr_ip = __get_robot_ip()
     robot_response = None
+
+    '''
+    obstacles_in_way = check_if_obstacles_in_the_way(map_id=map_id, password=password, host=host, call_port=call_port)
+
+    if obstacles_in_way:
+        data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                     host=host, port=call_port)
+
+        response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+        response.content_type = "json"
+
+        return response
+    '''
 
     # Position is returned from robot in meters
     try:
@@ -376,7 +391,6 @@ def move():
                 api_url = karr_ip + "/right"
                 robot_response = requests.get(api_url).json()
 
-        map_id = __get_current_map_id()
         process_robot_response(robot_response=robot_response, map_id=map_id,
                                password=password, host=host, call_port=call_port)
 
@@ -386,7 +400,7 @@ def move():
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.content_type = "json"
 
-        update_current_camera_view()
+        # update_current_camera_view()
 
         return response
     except Exception as ex:
@@ -397,6 +411,47 @@ def move():
 
         response.data = "An error occurred - see logs"
         return response
+
+
+# TODO: Implement this
+def check_if_obstacles_in_the_way(map_id,  password, host, call_port):
+    robot = None
+    robot_candidates = data_models.MapObject.get_map_objects(map_id=map_id, object_type="OurRobot", password=password,
+                                                             host=host, port=call_port)
+
+    # Treat it as if it's good to go and when we get our response from movement the robot
+    # record will be created
+    if len(robot_candidates) == 0:
+        return False
+    else:
+        robot = robot_candidates[0]
+
+    obstacles = data_models.MapObject.get_map_objects(map_id=map_id, object_type="Can", password=password,
+                                                      host=host, port=call_port)
+
+    robot_x = robot.location[0]
+    robot_y = robot.location[1]
+    direction = robot.direction
+
+    for obstacle in obstacles:
+        obst_x = obstacle.location[0]
+        obst_y = obstacle.location[1]
+
+        match direction:
+            case "N":
+                if obst_y - 1 == robot_y:
+                    return True
+            case "S":
+                if obst_y + 1 == robot_y:
+                    return True
+            case "E":
+                if obst_x - 1 == robot_x:
+                    return True
+            case "W":
+                if obst_x + 1 == robot_x:
+                    return True
+
+    return False
 
 
 # Test moving the robot over the Interwebs.
@@ -458,6 +513,37 @@ def process_other_robot_request(robot_response, map_id, password,
                                                    password=password, host=host, port=call_port, database=database)
 
     return found_obstacle
+
+
+# Only for testing purposes; test locally, do not deploy
+'''
+@app.route('/robotresponse', methods=['GET'])
+def test_robot_response():
+    robot_response_file = open('sample-data/robot-move-response.json')
+    robot_response = json.load(robot_response_file)
+
+    connection_info = database_handler.get_connection_info(request)
+
+    password = connection_info[0]
+    host = connection_info[1]
+    call_port = connection_info[2]
+
+    map_id = __get_current_map_id()
+
+    process_robot_response(robot_response=robot_response, map_id=map_id, password=password,
+                           host=host, call_port=call_port)
+
+    data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                 host=host, port=call_port)
+
+    response = Flask.response_class()
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+
+    response.content_type = "json"
+
+    return response
+'''
 
 
 def process_robot_response(robot_response, map_id, password,
