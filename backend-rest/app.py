@@ -52,7 +52,7 @@ def __get_robot_ip():
     if "robot_ip" in session:
         return str(session["robot_ip"])
     else:
-        return "http://129.3.20.160:9871"  # Default public IP for Karr
+        return "<ENTER IP HERE>"  # Default public IP for Karr
 
 
 def __get_current_map_id():
@@ -386,7 +386,7 @@ def move():
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.content_type = "json"
 
-        #update_current_camera_view()
+        update_current_camera_view()
 
         return response
     except Exception as ex:
