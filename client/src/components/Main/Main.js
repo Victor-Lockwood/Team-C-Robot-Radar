@@ -12,6 +12,7 @@ export default function Main() {
 
 var FINISH_NODE_ROW = 1;
 var FINISH_NODE_COL = 9;
+const [intervalId, setIntervalId] = useState(0);
 
 const postDjikstra = () =>  {
     
@@ -40,7 +41,7 @@ const postDjikstra = () =>  {
   
 }
 
-const fetchMap = () => {
+ const fetchMap = () => {
   fetch("http://<REMOTE IP>:9823/mapdata?password=<PASSWORD>&remote=True")
     .then((response) => response.json())
     .then((response) => {
@@ -56,6 +57,19 @@ const fetchMap = () => {
     .catch(() => {
       console.log("ERROR");
     });
+  }
+  const getData = () => {
+    if(intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(0);
+      return;
+    }
+    const timerId = setInterval(() => {
+      fetchMap();
+      console.log('Successful Location GET');
+    }, 5000);
+    setIntervalId(timerId);
+    
   }
   const getInitialGrid = () => {
     const grid = [];
@@ -79,10 +93,9 @@ const fetchMap = () => {
     }
     console.log(rawMap)
     for (let i = 0; i < rawMap.length ; i++) {
-      if(rawMap.object_type != "OurRobot"){
         const newGrid = getNewGridWithWallToggled(grid, rawMap[i].location[0], rawMap[i].location[1]);
     setGrid(newGrid);
-      }
+      
     }
     return grid;
   };
@@ -108,14 +121,14 @@ const fetchMap = () => {
       if (i === visitedNodesInOrder.length) {
         setTimeout(() => {
           animateShortestPath(nodesInShortestPathOrder);
-        }, 10 * i);
+        }, 11 * i);
         return;
       }
       setTimeout(() => {
         const node = visitedNodesInOrder[i];
         document.getElementById(`node-${node.row}-${node.col}`).className =
           "node node-visited";
-      }, 10 * i);
+      }, 11 * i);
     }
   }
 
@@ -129,8 +142,8 @@ const fetchMap = () => {
     }
   }
 
-  function visualizeDijkstra(X, Y) {
-    const startNode = grid[X][Y];
+  function visualizeDijkstra() {
+    const startNode = grid[ourRobotX][ourRobotY+1];
     const finishNode = grid[FINISH_NODE_ROW][FINISH_NODE_COL];
     const visitedNodesInOrder = dijkstra(grid, startNode, finishNode);
     const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode);
@@ -157,12 +170,13 @@ const fetchMap = () => {
     return (
       <div>
         <NavigationBar
-          onVisiualizePressed={() => visualizeDijkstra(ourRobotX , ourRobotY )}
+          onVisiualizePressed={() => visualizeDijkstra()}
           onClearPathPressed={() => clearPath()}
           getCoordinates={() => fetchMap()}
-          postCoordinates={() => postDjikstra()}
+          timeCoordinates={() => getData()}
+
         />
- <Button onClick={postDjikstra}>DEMO</Button>
+
         <div className="grid">
           {grid.map((row, rowIdx) => {
             return (
