@@ -1,20 +1,32 @@
-from flask import Flask, render_template, Response, request, send_file, jsonify
+from flask import Flask, session, render_template, Response, request, send_file, jsonify, request
+import requests
 import gopigo
 import time
 from picamera import PiCamera
 from time import sleep
 from camera_pi import Camera
 from PIL import Image
+from flask_session import Session
 import easygopigo
 import zipfile
 import io
 import pathlib
 
 
+app = Flask(__name__)
+
+SESSION_TYPE = 'filesystem'
+app.config.from_object(__name__)
+Session(app)
+
+def __get_offset():
+    return 5
+
 my_ultrasonic = easygopigo.UltraSonicSensor()
 servo_pos = 90
 location =[2.5, 2.5]
-orientation='E'#this is necessary to know what coordinate to change
+orientation='E'
+speedOffset=8#this is necessary to know what coordinate to change
 #E will mean the pi is facing the east
 #N north
 #S south
@@ -54,22 +66,22 @@ def determineLocationChange(orientationChange = 'F', command = 'N'):
         pass
     elif command == 'F':
         if orientation == 'E':
-            location = [round(location[0]+ 0.01, 2), round(location[1],2)]
+            location = [round(location[0]+ 0.45, 2), round(location[1],2)]
         if orientation == 'N':
-            location = [round(location[0],2), round(location[1] +0.01,2)]
+            location = [round(location[0],2), round(location[1] +0.45,2)]
         if orientation == 'W':
-            location = [round(location[0]-0.01, 2), round(location[1],2)]
+            location = [round(location[0]-0.45, 2), round(location[1],2)]
         if orientation == 'S':
-            location = [round(location[0],2), round(location[1]- 0.01,2)]
+            location = [round(location[0],2), round(location[1]- 0.45,2)]
     elif command == 'B':
         if orientation == 'E':
-            location = [round(location[0]-0.01, 2), round(location[1],2)]
+            location = [round(location[0]-0.45, 2), round(location[1],2)]
         if orientation == 'N':
-            location = [round(location[0],2), round(location[1]- 0.01,2)]
+            location = [round(location[0],2), round(location[1]- 0.45,2)]
         if orientation == 'W':
-            location = [round(location[0]+ 0.01,2), round(location[1],2)]
+            location = [round(location[0]+ 0.45,2), round(location[1],2)]
         if orientation == 'S':
-            location = [round(location[0],2), round(location[1] +0.01,2)]
+            location = [round(location[0],2), round(location[1] +0.45,2)]
         
             
         
@@ -86,10 +98,6 @@ def determineLocationChange(orientationChange = 'F', command = 'N'):
             location = [location[0], location[1] +0.01]
     '''
             
-        
-    
-
-app = Flask(__name__)
 
 @app.route('/')
 def index():
@@ -98,48 +106,81 @@ def index():
 
 @app.route('/forward')
 def forward():
+        #gopigo.turn_left_wait_for_completion(33)
+        #if 'left_speed' not in globals():
+        global left_speed
+        left_speed = 155
+            
+        #if 'right_speed' not in globals():
+        global right_speed
+        right_speed = 150
+
+        #print(left_speed)
+        #print(right_speed)
+        
+        gopigo.set_left_speed(left_speed)
+        gopigo.set_right_speed(right_speed)
+        
         print("Forward!")
-        gopigo.fwd(100) # Send the GoPiGo Forward
-        determineLocationChange('F', 'F')
+        gopigo.fwd(50)#)+ speedOffset)  # Send the GoPiGo Forward
         sleep(2.5)
+        determineLocationChange('F', 'F')
+        #sleep(2.5)
         print("location: ", str(location), ", orientation: ", str(orientation))
-        gopigo.stop()   # the stop the GoPiGo
+        #gopigo.stop()  # the stop the GoPiGo
         data = my_ultrasonic.read()
-        return jsonify(['location', location , 'orientation',orientation, 'radar', data])
+        #print("data: ", str(data))
+       
+        #data = my_ultrasonic.read()
+        
+        
+        #motor_pulses_left = gopigo.enc_read(0)
+        #motor_pulses_right = gopigo.enc_read(1)
+        #print(motor_pulses_left)
+        #print(motor_pulses_right)
+        '''
+        if(motor_pulses_right > motor_pulses_left):
+            left_speed += __get_offset()
+        elif (motor_pulses_left > motor_pulses_right):
+            right_speed += __get_offset()
+        '''       
+        #print("left motor speed: " + str(left_speed))
+        #print("right motor speed: " + str(right_speed))
+        
+        return jsonify(location = location , orientation = orientation, radar = data)
 
 @app.route('/backward')
 def backward():
         print("Backward!")
-        gopigo.bwd(100) # Send the GoPiGo Backward
-        sleep(2.5)
+        gopigo.bwd(50)  # Send the GoPiGo Backward
+        #sleep(2.5)
         determineLocationChange('F', 'B')
         print("location: ", str(location), ", orientation: ", str(orientation))
-        gopigo.stop()   # and then stop the GoPiGo.
+        #gopigo.stop()  # and then stop the GoPiGo.
         data = my_ultrasonic.read()
-        return jsonify(['location', location , 'orientation',orientation, 'radar', data])
-        
+        return jsonify(location = location , orientation = orientation, radar = data)        
 
 @app.route('/left')
 def left():
         print("Left!")
         gopigo.turn_left_wait_for_completion(100)
-        sleep(2.5)
+        #sleep(2.5)
         determineLocationChange('T', 'L')
         print("location: ", str(location), ", orientation: ", str(orientation))
-        gopigo.stop()
+        #gopigo.stop()
         data = my_ultrasonic.read()
-        return jsonify(['location', location , 'orientation',orientation, 'radar', data])
+        return jsonify(location= location , orientation = orientation, radar = data)
 
 @app.route('/right')
 def right():
         print("Right!")
         gopigo.turn_right_wait_for_completion(100)
-        sleep(2.5)
+        #sleep(2.5)
         determineLocationChange('T', 'R')
         print("location: ", str(location), ", orientation: ", str(orientation))
-        gopigo.stop()
+        #gopigo.stop()
         data = my_ultrasonic.read()
-        return jsonify(['location', location , 'orientation',orientation, 'radar', data])
+        return jsonify(location= location , orientation = orientation, radar = data)
     
 @app.route('/camera', methods=['GET','POST'])
 def takePicture():
@@ -147,20 +188,21 @@ def takePicture():
             print("Picture Taken!")
             camera = PiCamera()
             camera.start_preview()
-            sleep(5)
+            sleep(2.5)
             camera.capture('/home/pi/Desktop/pictures/frontPicture.png')
-            gopigo.turn_right_wait_for_completion(100)
+            gopigo.turn_right_wait_for_completion(90)
             sleep(2.5)
             camera.capture('/home/pi/Desktop/pictures/ninetyDegreesPicture.png')
-            gopigo.turn_right_wait_for_completion(100)
+            gopigo.turn_right_wait_for_completion(90)
             sleep(2.5)
             camera.capture('/home/pi/Desktop/pictures/oneEightyDegreesPicture.png')
-            gopigo.turn_right_wait_for_completion(100)
+            gopigo.turn_right_wait_for_completion(90)
             sleep(2.5)
             camera.capture('/home/pi/Desktop/pictures/twoSeventyDegreesPicture.png')
-            gopigo.turn_right_wait_for_completion(100)
+            gopigo.turn_right_wait_for_completion(90)
             sleep(2.5)
             camera.stop_preview()
+            camera.close()
             #we now must zip the four images together to be able to send it in one go
             listFiles = ['/home/pi/Desktop/pictures/frontPicture.png',
                          '/home/pi/Desktop/pictures/ninetyDegreesPicture.png',
@@ -191,6 +233,7 @@ def takePicture():
             gopigo.turn_right_wait_for_completion(100)
             sleep(2.5)
             camera.stop_preview()
+            camera.close()
             listFiles = ['/home/pi/Desktop/pictures/frontPicture.png',
                          '/home/pi/Desktop/pictures/ninetyDegreesPicture.png',
                          '/home/pi/Desktop/pictures/oneEightyDegreesPicture.png',
@@ -232,9 +275,13 @@ def radar():
 
 @app.route('/autonomous/<string:stk>')
 def autonomous(stk):
-    #need to offset by 5 to incorporate hardware differences
-    gopigo.set_left_speed(105)
-    gopigo.set_right_speed(100)
+    
+    #gopigo.set_left_speed(100)
+    #gopigo.set_right_speed(170)
+    print(gopigo.read_motor_speed)
+    
+    #gopigo.set_speed(150)
+    
     
     lst=[]
     lst = stk.split(",")
@@ -242,31 +289,31 @@ def autonomous(stk):
         if(i == 'f'):
             gopigo.fwd(100)
             determineLocationChange('F', 'F')
-            #sleep(1000)
+            sleep(2.5)
             #gopigo.stop()
             #time.sleep(.25)
         if(i == 'b'):
             gopigo.bwd(100)
             determineLocationChange('F', 'B')
-            #sleep(1000)
+            sleep(2.5)
             #gopigo.stop()
             #time.sleep(.25)
         if(i == 'r'):
             gopigo.turn_right_wait_for_completion(100)
             determineLocationChange('T', 'R')
-            #sleep(1000)
+            sleep(2.5)
             #gopigo.stop()
             #time.sleep(.25)
         if(i == 'l'):
             gopigo.turn_left_wait_for_completion(100)
             determineLocationChange('T', 'L')
-            #sleep(1000)
+            sleep(2.5)
             #gopigo.stop()
             #time.sleep(.25)
         sleep(2.5)
-        #gopigo.stop()
+        gopigo.stop()
     data = my_ultrasonic.read()
-    return jsonify(['location', location , 'orientation',orientation, 'radar', data])
+    return jsonify(location= location , orientation = orientation, radar = data)
     
 
 
@@ -289,26 +336,32 @@ def moveServo(inp):
         gopigo.servo(servo_pos)     # This function updates the servo with the latest positon.  Move the servo.
         time.sleep(.1)
         return 'servo position: ' + str(servo_pos)
-@app.route('/liveStream')
-def liveStream():
-
-        return render_template('pi_camera_index.html')
     
-def gen(camera):
-    # Video streaming generator function.  For more on generator functions see Miguel Gringberg's beautiful post here:  https://blog.miguelgrinberg.com/post/video-streaming-with-flask
-    while True:
-        frame = camera.get_frame()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-@app.route('/liveStream/video_feed')
-def video_feed():
-    # Video streaming route. Put this in the src attribute of an img tag.
-    return Response(gen(Camera()),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
-
-
+@app.route('/liveStream', methods=['GET', 'POST'])
+def liveStream():
+    if request.method == 'POST':
+        camera = PiCamera()
+        camera.start_preview()
+        #sleep(2.5)
+        camera.capture('/home/pi/Desktop/pictures/videoFeed.png')
+        camera.stop_preview()
+        camera.close()
+            
+        return send_file('/home/pi/Desktop/pictures/videoFeed.png', mimetype='image/png')   
+        #return send_file(data, mimetype='application/zip', as_attachment=True, attachment_filename='data.zip')
         
+    if request.method == 'GET':
+        return "use post"
+        #return render_template('pi_camera_index.html')
+ #this simply tests our connection w/ remote, things are good if a 200 returns
+@app.route('/logMoxie')
+def logMoxie():
+    url = 'http://<REMOTE IP>:9823/logs?password=<PASSWORD>&remote=True'
+    data = requests.get(url)#request.form.get('origin')
+    print("Data: ",data)
+    return str(data)
+
+
     
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    app.run(host='0.0.0.0', port=5000)#9871)#debug = False, host = '0.0.0.0')

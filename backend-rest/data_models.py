@@ -77,6 +77,29 @@ class Log:
 
         return logs
 
+    @staticmethod
+    def get_latest_logs(password, host="localhost", port=5432, database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password=password, host=host, database=database, port=port)
+        cur = conn.cursor()
+
+        cur.execute('SELECT * FROM "Logs" ORDER BY "CreatedAt" DESC LIMIT 10')
+        rows = cur.fetchall()
+
+        logs = list()
+
+        for row in rows:
+            id = row[0]
+            created_at = row[1]
+            origin = row[2]
+            message = row[3]
+            log_type = row[4]
+            stacktrace = row[5]
+
+            log_record = Log(origin, message, log_type, stacktrace, created_at, id)
+            logs.append(log_record)
+
+        return logs
+
 
 class MapObject:
     def __init__(self, map_id, object_type, location_x, location_y, direction=None, created_at=None, obj_id=None):

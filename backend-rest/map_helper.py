@@ -90,13 +90,13 @@ def obstacle_detection(map_id, robot_position, radar_reading, direction,
 
 
 # We get our position in meters, need to convert to blocks for the map.
-# Blocks are 10cm each.
-def convert_robot_position(raw_robot_position, block_size=10):
+# Blocks are 50cm each.
+def convert_robot_position(raw_robot_position, block_size=50):
     raw_robot_x = raw_robot_position[0]
     raw_robot_y = raw_robot_position[1]
 
-    new_robot_x = round(raw_robot_x * block_size)
-    new_robot_y = round(raw_robot_y * block_size)
+    new_robot_x = round((raw_robot_x * 100) / block_size)
+    new_robot_y = round((raw_robot_y * 100) / block_size)
 
     robot_position = (new_robot_x, new_robot_y)
 
@@ -104,7 +104,7 @@ def convert_robot_position(raw_robot_position, block_size=10):
 
 
 # Radar reading comes in cm, convert to blocks
-def __convert_radar_reading(radar_reading, block_size=10):
+def __convert_radar_reading(radar_reading, block_size=50):
     return round(radar_reading / block_size)
 
 

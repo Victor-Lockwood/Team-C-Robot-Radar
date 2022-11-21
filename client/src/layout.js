@@ -9,7 +9,7 @@ const Layout = () => {
     <>
      <Tophat/>
      <Outlet />
-     <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer" position="absolute" bottom="0px" left="0px" right="0px">
+     {/* <Box sx={{ bgcolor: 'background.paper', p: 6 }} component="footer" position="absolute" bottom="0px" left="0px" right="0px">
        <Typography variant="body2" color="text.secondary" align="center">
         {'Copyright © '}
         <Link color="inherit" href="https://oswego.edu/">
@@ -18,7 +18,7 @@ const Layout = () => {
         {new Date().getFullYear()}
         {'.'}
       </Typography>
-      </Box>
+      </Box> */}
     
     </>
   );
