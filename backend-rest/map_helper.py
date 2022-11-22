@@ -131,6 +131,7 @@ def convert_dijkstra_to_moves(dijkstra_coordinates, robot_record):
     # Start variables: Where the robot is right now, aka where it is starting
     # Current variables: keep track of position when building move list
 
+    # TODO: Received coordinates already have current position - start from first in the list
     start_pos = list(robot_record.location)
     current_pos = list(robot_record.location)
 
@@ -141,10 +142,12 @@ def convert_dijkstra_to_moves(dijkstra_coordinates, robot_record):
     move_list = []
 
     for coordinate in coordinates:
+        # TODO: Swap this
         current_x = current_pos[0]
         current_y = current_pos[1]
-        next_x = coordinate[0]
-        next_y = coordinate[1]
+
+        next_x = coordinate[1]
+        next_y = coordinate[0]
 
         # Turn to face east
         if next_x > current_x:

@@ -332,7 +332,7 @@ def autonomous():
 
     data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
                                                  host=host, port=call_port)
-    update_current_camera_view()
+    # update_current_camera_view()
 
     response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
     response.content_type = "json"
