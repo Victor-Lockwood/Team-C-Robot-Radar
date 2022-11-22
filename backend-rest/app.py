@@ -13,6 +13,7 @@ import requests
 from flask import Flask, jsonify, request, send_file, session
 
 from flask_session import Session
+from flask_cors import CORS
 from PIL import Image
 from os.path import exists
 
@@ -22,6 +23,7 @@ import map_helper
 
 # creating a Flask app
 app = Flask(__name__)
+CORS(app)
 
 # Setup session info
 SESSION_TYPE = 'filesystem'
@@ -196,7 +198,6 @@ def get_current_view():
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
 # - remote       -   Connect to the Docker DB on Moxie (True or False).
-# TODO: Implement POST
 @app.route('/mapdata', methods=['GET', 'POST'])
 def mapdata():
     connection_info = database_handler.get_connection_info(request)
@@ -316,6 +317,7 @@ def autonomous():
 
     response = Flask.response_class()
     response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add("Access-Control-Allow-Methods", "POST")
 
     map_id = __get_current_map_id()
 
