@@ -10,7 +10,7 @@ import zipfile
 import shutil
 import requests
 
-from flask import Flask, jsonify, request, send_file, session
+from flask import Flask, request, send_file, session
 
 from flask_session import Session
 from flask_cors import CORS
