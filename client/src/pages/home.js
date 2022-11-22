@@ -13,29 +13,11 @@ import Main from '../components/Main/Main';
 
 export default function Home() {
   const [mapObjects, setMapObjects] = useState([]);
-  const [logs, setLogs] = useState([]);
+  const [intervalId, setIntervalId] = useState(0);
   const [data, setData] = useState({data: []});
   const [err, setErr] = useState('');
-  //const getLogs = () => {
-    // try{
-    //   fetch("http://<REMOTE IP>:9823/logs?password=<PASSWORD>&remote=True").then(
-    //   (response) => console.log("THIS" + response)
-    // )
-    // }
-    // catch(error){
-    //   console.log(error)
-    // }
-     
-      const fetchLogs = () => {
-        fetch("http://<REMOTE IP>:9823/logs?password=<PASSWORD>&remote=True")
-          .then((response) => response.json())
-          .then((response) => {
-            console.log(response);
-          })
-          .catch(() => {
-            console.log("ERROR");
-          });
-        }
+ 
+  
         const fetchMap = () => {
           fetch("http://<REMOTE IP>:9823/mapdata?password=<PASSWORD>&remote=True")
             .then((response) => response.json())
@@ -47,16 +29,19 @@ export default function Home() {
             });
           }
         const getData = () => {
-          fetchLogs();
+          if(intervalId) {
+            clearInterval(intervalId);
+            setIntervalId(0);
+            return;
+          }
           const timerId = setInterval(() => {
             fetchMap();
             console.log('Successful Location GET');
           }, 5000);
+          setIntervalId(timerId);
           
         }
-        function myStopFunction() {
-          clearInterval(getData);
-        }
+       
   return (
     
     <Box sx={{ flexGrow: 1 }}>
@@ -66,7 +51,6 @@ export default function Home() {
             <GreetingCard/>
             <Button onClick={getData}>Initialize</Button>
               <br/>
-              <Button onClick={myStopFunction}>TIME STOP</Button>
             <ControlCard/>
               <br/>
             <ConsoleCard/>  

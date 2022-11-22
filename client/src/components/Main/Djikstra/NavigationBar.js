@@ -20,6 +20,9 @@ export default class NavigationBar extends Component {
     const { onVisiualizePressed } = this.props;
     const { getCoordinates } = this.props;
     const { postCoordinates } = this.props;
+    const { timeCoordinates } = this.props;
+    
+
 
     return (
       <div>
@@ -33,8 +36,8 @@ export default class NavigationBar extends Component {
 <br/>
         
         <Stack direction="row" spacing={1} paddingLeft={1}>
-        <Button startIcon={<AltRouteRoundedIcon />} variant="contained" onClick={() => postCoordinates}>Execute Path Radar</Button>
-        <Button startIcon={<PlayArrowRoundedIcon />} variant="contained" color="success" onClick={() => getCoordinates()}>Initialize Radar</Button>
+        <Button startIcon={<AltRouteRoundedIcon />} variant="contained" onClick={() => postCoordinates()}>Execute Path Radar</Button>
+        <Button startIcon={<PlayArrowRoundedIcon />} variant="contained" color="success" onClick={() => timeCoordinates()}>Initialize Radar</Button>
         <Button startIcon={<StopRoundedIcon />} variant="contained"color="error" onClick={() => getCoordinates()}>Halt Read</Button>
 
 

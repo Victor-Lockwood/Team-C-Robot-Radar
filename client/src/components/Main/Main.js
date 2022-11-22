@@ -1,6 +1,5 @@
 import Node from "./Djikstra/Node";
 import NavigationBar from "./Djikstra/NavigationBar";
-import { dijkstra, getNodesInShortestPathOrder } from "./Djikstra/dijkstra";
 import React, { useState, useEffect } from 'react';
 import { Button } from "@mui/material";
 
@@ -9,38 +8,47 @@ export default function Main() {
   const [ourRobotY, setOurRobotY] = useState(0);
   const [rawMap, setRawMap]  = useState([]);
   const [grid, setGrid] = useState([]);
+  const [path, setPath] = useState([]);
+  const [djikstraPost, setDjikstraPost] = useState({});
 
 var FINISH_NODE_ROW = 1;
 var FINISH_NODE_COL = 9;
+const [intervalId, setIntervalId] = useState(0);
+
+var myHeaders = new Headers();
+myHeaders.append("Content-Type", "application/json");
+myHeaders.append("Cookie", "session=468bd4d8-d02e-4d26-a2ef-1849dc4aff3f");
+myHeaders.append("Access-Control-Allow-Origin", "*");
+
+var raw = JSON.stringify({
+  "Coordinates": [
+         [15, 1],
+         [15, 2],
+         [15, 3],
+         [15, 4],
+         [15, 5],
+         [15, 6],
+         [15, 7],
+         [15, 8],
+         [15, 9]
+  ]
+});
+
+var requestOptions = {
+  method: 'POST',
+  headers: myHeaders,
+  body: raw,
+  redirect: 'follow'
+};
 
 const postDjikstra = () =>  {
-    
-  // Send data to the backend via POST
-  fetch('http://<REMOTE IP>:9823/autonomous?password=<PASSWORD>&remote=True', {  // Enter your IP address here
-
-    method: 'POST', 
-    body: JSON.stringify(
-      {
-        "Coordinates":
-         [
-            [15, 1],
-            [15, 2],
-            [15, 3],
-            [15, 4],
-            [15, 5],
-            [15, 6],
-            [15, 7],
-            [15, 8],
-            [15, 9]
-        ]
-     }
-    ) 
-
-  })
-  
+  fetch("http://<REMOTE IP>:9823/autonomous?password=<PASSWORD>&remote=True", requestOptions)
+  .then(response => response.text())
+  .then(result => console.log(result))
+  .catch(error => console.log('error', error));
 }
 
-const fetchMap = () => {
+ const fetchMap = () => {
   fetch("http://<REMOTE IP>:9823/mapdata?password=<PASSWORD>&remote=True")
     .then((response) => response.json())
     .then((response) => {
@@ -56,6 +64,19 @@ const fetchMap = () => {
     .catch(() => {
       console.log("ERROR");
     });
+  }
+  const getData = () => {
+    if(intervalId) {
+      clearInterval(intervalId);
+      setIntervalId(0);
+      return;
+    }
+    const timerId = setInterval(() => {
+      fetchMap();
+      console.log('Successful Location GET');
+    }, 5000);
+    setIntervalId(timerId);
+    
   }
   const getInitialGrid = () => {
     const grid = [];
@@ -79,10 +100,9 @@ const fetchMap = () => {
     }
     console.log(rawMap)
     for (let i = 0; i < rawMap.length ; i++) {
-      if(rawMap.object_type != "OurRobot"){
         const newGrid = getNewGridWithWallToggled(grid, rawMap[i].location[0], rawMap[i].location[1]);
     setGrid(newGrid);
-      }
+      
     }
     return grid;
   };
@@ -108,14 +128,14 @@ const fetchMap = () => {
       if (i === visitedNodesInOrder.length) {
         setTimeout(() => {
           animateShortestPath(nodesInShortestPathOrder);
-        }, 10 * i);
+        }, 11 * i);
         return;
       }
       setTimeout(() => {
         const node = visitedNodesInOrder[i];
         document.getElementById(`node-${node.row}-${node.col}`).className =
           "node node-visited";
-      }, 10 * i);
+      }, 11 * i);
     }
   }
 
@@ -129,8 +149,8 @@ const fetchMap = () => {
     }
   }
 
-  function visualizeDijkstra(X, Y) {
-    const startNode = grid[X][Y];
+  function visualizeDijkstra() {
+    const startNode = grid[ourRobotX][ourRobotY+1];
     const finishNode = grid[FINISH_NODE_ROW][FINISH_NODE_COL];
     const visitedNodesInOrder = dijkstra(grid, startNode, finishNode);
     const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode);
@@ -153,16 +173,108 @@ const fetchMap = () => {
     newGrid[row][col] = newNode;
     return newGrid;
   };
+  function dijkstra(grid, startNode, finishNode) {
+    const visitedNodesInOrder = [];
+    startNode.distance = 0;
+    const unvisitedNodes = getAllNodes(grid);
+    while (!!unvisitedNodes.length) {
+      sortNodesByDistance(unvisitedNodes);
+      const closestNode = unvisitedNodes.shift();
+      // If we encounter a wall, we skip it.
+      if (closestNode.isWall) continue;
+      // If the closest node is at a distance of infinity,
+      // we must be trapped and should therefore stop.
+      if (closestNode.distance === Infinity) return visitedNodesInOrder;
+      closestNode.isVisited = true;
+      visitedNodesInOrder.push(closestNode);
+      if (closestNode === finishNode) return visitedNodesInOrder;
+      updateUnvisitedNeighbors(closestNode, grid);
+    }
+  }
   
+  function sortNodesByDistance(unvisitedNodes) {
+    unvisitedNodes.sort((nodeA, nodeB) => nodeA.distance - nodeB.distance);
+  }
+  
+  function updateUnvisitedNeighbors(node, grid) {
+    const unvisitedNeighbors = getUnvisitedNeighbors(node, grid);
+    for (const neighbor of unvisitedNeighbors) {
+      neighbor.distance = node.distance + 1;
+      neighbor.previousNode = node;
+    }
+  }
+  
+  function getUnvisitedNeighbors(node, grid) {
+    const neighbors = [];
+    const { col, row } = node;
+    if (row > 0) neighbors.push(grid[row - 1][col]);
+    if (row < grid.length - 1) neighbors.push(grid[row + 1][col]);
+    if (col > 0) neighbors.push(grid[row][col - 1]);
+    if (col < grid[0].length - 1) neighbors.push(grid[row][col + 1]);
+    return neighbors.filter(neighbor => !neighbor.isVisited);
+  }
+  
+  function getAllNodes(grid) {
+    const nodes = [];
+    for (const row of grid) {
+      for (const node of row) {
+        nodes.push(node);
+      }
+    }
+    return nodes;
+  }
+  
+  // Backtracks from the finishNode to find the shortest path.
+  // Only works when called *after* the dijkstra method above.
+function getNodesInShortestPathOrder(finishNode) {
+
+  const generateCoordinates = () => {
+    setDjikstraPost(
+      {
+        "Coordinates": path
+      }
+    )
+    console.log({
+      "Coordinates": path
+    })
+    
+    console.log({
+      "Coordinates": [
+             [15, 1],
+             [15, 2],
+             [15, 3],
+             [15, 4],
+             [15, 5],
+             [15, 6],
+             [15, 7],
+             [15, 8],
+             [15, 9]
+      ]
+    })
+  }
+    const nodesInShortestPathOrder = [];
+    let currentNode = finishNode;
+    while (currentNode !== null) {
+      //ADURAND INSTRUCTIONS
+      //console.log('Current Node: COLUMN: ' + currentNode.col + " ROW: "  + currentNode.row)
+      path.push([currentNode.col, currentNode.row])
+      nodesInShortestPathOrder.unshift(currentNode);
+      currentNode = currentNode.previousNode;
+    }
+    generateCoordinates()
+    return nodesInShortestPathOrder;
+  }
     return (
       <div>
         <NavigationBar
-          onVisiualizePressed={() => visualizeDijkstra(ourRobotX , ourRobotY )}
+          onVisiualizePressed={() => visualizeDijkstra()}
           onClearPathPressed={() => clearPath()}
           getCoordinates={() => fetchMap()}
+          timeCoordinates={() => getData()}
           postCoordinates={() => postDjikstra()}
+
         />
- <Button onClick={postDjikstra}>DEMO</Button>
+
         <div className="grid">
           {grid.map((row, rowIdx) => {
             return (
