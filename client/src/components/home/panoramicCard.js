@@ -13,6 +13,7 @@ function PanoCard() {
       .then((response) => response.json())
       .then((response) => {
         console.log(response);
+        setUrl("");
       })
       .catch(() => {
         console.log("ERROR");

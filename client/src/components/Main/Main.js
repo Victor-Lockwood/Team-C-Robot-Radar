@@ -13,6 +13,7 @@ export default function Main() {
 
 var FINISH_NODE_ROW = 1;
 var FINISH_NODE_COL = 9;
+
 const [intervalId, setIntervalId] = useState(0);
 
 var myHeaders = new Headers();
@@ -20,19 +21,7 @@ myHeaders.append("Content-Type", "application/json");
 myHeaders.append("Cookie", "session=468bd4d8-d02e-4d26-a2ef-1849dc4aff3f");
 myHeaders.append("Access-Control-Allow-Origin", "*");
 
-var raw = JSON.stringify({
-  "Coordinates": [
-         [15, 1],
-         [15, 2],
-         [15, 3],
-         [15, 4],
-         [15, 5],
-         [15, 6],
-         [15, 7],
-         [15, 8],
-         [15, 9]
-  ]
-});
+var raw = JSON.stringify(djikstraPost);
 
 var requestOptions = {
   method: 'POST',
@@ -150,7 +139,7 @@ const postDjikstra = () =>  {
   }
 
   function visualizeDijkstra() {
-    const startNode = grid[ourRobotX][ourRobotY+1];
+    const startNode = grid[ourRobotX][ourRobotY];
     const finishNode = grid[FINISH_NODE_ROW][FINISH_NODE_COL];
     const visitedNodesInOrder = dijkstra(grid, startNode, finishNode);
     const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode);
@@ -229,6 +218,7 @@ const postDjikstra = () =>  {
 function getNodesInShortestPathOrder(finishNode) {
 
   const generateCoordinates = () => {
+    setPath(path.reverse())
     setDjikstraPost(
       {
         "Coordinates": path
@@ -238,19 +228,6 @@ function getNodesInShortestPathOrder(finishNode) {
       "Coordinates": path
     })
     
-    console.log({
-      "Coordinates": [
-             [15, 1],
-             [15, 2],
-             [15, 3],
-             [15, 4],
-             [15, 5],
-             [15, 6],
-             [15, 7],
-             [15, 8],
-             [15, 9]
-      ]
-    })
   }
     const nodesInShortestPathOrder = [];
     let currentNode = finishNode;
@@ -266,14 +243,7 @@ function getNodesInShortestPathOrder(finishNode) {
   }
     return (
       <div>
-        <NavigationBar
-          onVisiualizePressed={() => visualizeDijkstra()}
-          onClearPathPressed={() => clearPath()}
-          getCoordinates={() => fetchMap()}
-          timeCoordinates={() => getData()}
-          postCoordinates={() => postDjikstra()}
-
-        />
+       
 
         <div className="grid">
           {grid.map((row, rowIdx) => {
@@ -298,6 +268,16 @@ function getNodesInShortestPathOrder(finishNode) {
             );
           })}
         </div>
+        <br/>
+        <NavigationBar
+        style={{zIndex: '2'}}
+          onVisiualizePressed={() => visualizeDijkstra()}
+          onClearPathPressed={() => clearPath()}
+          getCoordinates={() => fetchMap()}
+          timeCoordinates={() => getData()}
+          postCoordinates={() => postDjikstra()}
+
+        />
       </div>
     );
   }
