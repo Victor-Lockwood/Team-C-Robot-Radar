@@ -20,7 +20,7 @@ export default class NavigationBar extends Component {
     const { onVisiualizePressed } = this.props;
     const { getCoordinates } = this.props;
     const { postCoordinates } = this.props;
-    const { timeCoordinates } = this.props;
+
     
 
 
@@ -29,19 +29,14 @@ export default class NavigationBar extends Component {
         
         <Stack direction="row" spacing={1} paddingLeft={1}>
         <Button startIcon={<RefreshRoundedIcon />} variant="contained" color="warning" onClick={() => window.location.reload(false)}>System Reset</Button>
+        <Button startIcon={<BrowserUpdatedRoundedIcon />} variant="contained"  onClick={() => getCoordinates()}>Manual Update</Button>
         <Button startIcon={<RouteRoundedIcon />} variant="contained" onClick={() => onVisiualizePressed()}>Generate Path</Button>
-        <Button startIcon={<BrowserUpdatedRoundedIcon />} variant="contained" color="warning" onClick={() => getCoordinates()}>Manual Update</Button>
+        
+        <Button startIcon={<AltRouteRoundedIcon />} variant="contained" color="warning" onClick={() => postCoordinates()}>Execute Path Radar</Button>
         
 </Stack>
 <br/>
         
-        <Stack direction="row" spacing={1} paddingLeft={1}>
-        <Button startIcon={<AltRouteRoundedIcon />} variant="contained" onClick={() => postCoordinates()}>Execute Path Radar</Button>
-        <Button startIcon={<PlayArrowRoundedIcon />} variant="contained" color="success" onClick={() => timeCoordinates()}>Initialize Radar</Button>
-        <Button startIcon={<StopRoundedIcon />} variant="contained"color="error" onClick={() => getCoordinates()}>Halt Read</Button>
-
-
-        </Stack>
       </div>
     );
   }
