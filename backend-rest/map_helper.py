@@ -51,7 +51,7 @@ def update_other_robot(map_id, robot_position, direction,
 # Otherwise, it returns False.
 def obstacle_detection(map_id, robot_position, radar_reading, direction,
                        password, host="localhost", port=5432, database="RobotRadarAlpha"):
-    if radar_reading == 501:
+    if radar_reading > 35:
         return False
 
     potential_obstacle_coordinates = \
@@ -105,7 +105,12 @@ def convert_robot_position(raw_robot_position, block_size=50):
 
 # Radar reading comes in cm, convert to blocks
 def __convert_radar_reading(radar_reading, block_size=50):
-    return round(radar_reading / block_size)
+    candidate_value = round(radar_reading / block_size)
+
+    if candidate_value == 0:
+        return 1
+
+    return candidate_value
 
 
 # robot_position needs to be converted to blocks first
@@ -131,20 +136,18 @@ def convert_dijkstra_to_moves(dijkstra_coordinates, robot_record):
     # Start variables: Where the robot is right now, aka where it is starting
     # Current variables: keep track of position when building move list
 
-    # TODO: Received coordinates already have current position - start from first in the list
-    start_pos = list(robot_record.location)
-    current_pos = list(robot_record.location)
+    # Received coordinates already have current position - start from first in the list
+    current_pos = dijkstra_coordinates.pop(0)
 
-    start_dir = robot_record.direction
     current_dir = robot_record.direction
 
     coordinates = dijkstra_coordinates
     move_list = []
 
     for coordinate in coordinates:
-        # TODO: Swap this
-        current_x = current_pos[0]
-        current_y = current_pos[1]
+        # X and Y are swapped on the frontend
+        current_x = current_pos[1]
+        current_y = current_pos[0]
 
         next_x = coordinate[1]
         next_y = coordinate[0]

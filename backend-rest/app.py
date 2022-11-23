@@ -310,6 +310,10 @@ def autonomous():
     host = connection_info[1]
     call_port = connection_info[2]
 
+    logged_coordinates = data_models.Log(origin=os.path.basename(__file__), message=json.dumps(dijkstra_coordinates),
+                                         log_type="Event")
+    logged_coordinates.create(password=password, host=host, port=call_port)
+
     delimiter = ','
 
     karr_ip = __get_robot_ip()
