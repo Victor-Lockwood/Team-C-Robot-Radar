@@ -219,6 +219,16 @@ def mapdata():
 
         data = data_models.MapObject.get_map_objects(map_id=map_id, object_type=object_type, password=password,
                                                      host=host, port=call_port)
+
+        # Dijkstra apparently needs this to work
+        ghost_candidates = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                                 host=host, port=call_port, object_type="OurRobot")
+        ghost = ghost_candidates[0]
+        ghost.object_type = "Can"
+        ghost.direction = None
+
+        data.append(ghost)
+
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response
@@ -336,7 +346,15 @@ def autonomous():
 
     data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
                                                  host=host, port=call_port)
-    # update_current_camera_view()
+
+    # Dijkstra apparently needs this to work
+    ghost_candidates = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                             host=host, port=call_port, object_type="OurRobot")
+    ghost = ghost_candidates[0]
+    ghost.object_type = "Can"
+    ghost.direction = None
+
+    data.append(ghost)
 
     response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
     response.content_type = "json"
@@ -402,6 +420,15 @@ def move():
 
         data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
                                                      host=host, port=call_port)
+
+        # Dijkstra apparently needs this to work
+        ghost_candidates = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                                 host=host, port=call_port, object_type="OurRobot")
+        ghost = ghost_candidates[0]
+        ghost.object_type = "Can"
+        ghost.direction = None
+
+        data.append(ghost)
 
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.content_type = "json"
