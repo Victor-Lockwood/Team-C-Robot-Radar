@@ -22,6 +22,20 @@ export default function ControlCard() {
     color: theme.palette.text.secondary,
   }));
 
+  React.useEffect(() => {document.addEventListener('keydown', detectKeyDown, true)}, [])
+
+  const detectKeyDown =(e) => {
+    console.log("clicked ", e.key)
+    if(e.key == 'w'){
+      HandleUp()
+    }else if(e.key == 's'){
+      HandleBack()
+    }else if(e.key == 'd'){
+      HandleRight()
+    }else if(e.key == 'a'){
+      HandleLeft()
+    }
+  }
   const HandleUp = (e) => {
       axios.get('http://<REMOTE IP>:9823/move?password=<PASSWORD>&movekey=W&remote=True')
          .then((response) => {
