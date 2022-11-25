@@ -1,9 +1,9 @@
 import { Avatar, Button, CardHeader, IconButton, Paper } from '@mui/material'
 import { red } from '@mui/material/colors';
-import React, { Component, useEffect, useState } from 'react'
+import React, {useState } from 'react'
 import CameraswitchRoundedIcon from '@mui/icons-material/CameraswitchRounded';
 import VrpanoRoundedIcon from '@mui/icons-material/VrpanoRounded';
-import { Pannellum, PannellumVideo } from "pannellum-react";
+import { Pannellum} from "pannellum-react";
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 function PanoCard() {
   const [url, setUrl] = useState("");

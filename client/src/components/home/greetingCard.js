@@ -1,5 +1,5 @@
 import { Paper } from '@mui/material'
-import React, { Component } from 'react'
+import React from 'react'
 
 function GreetingCard() {
   
@@ -7,7 +7,7 @@ function GreetingCard() {
         <Paper elevation={3}>
             <br/>
             <h2>
-            Hello, Adam!
+            Hello, BT!
             </h2>
          <br/>
          <br/>

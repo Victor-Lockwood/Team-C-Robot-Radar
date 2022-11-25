@@ -10,7 +10,6 @@ import ArrowDownwardRoundedIcon from '@mui/icons-material/ArrowDownwardRounded';
 import GamepadRoundedIcon from '@mui/icons-material/GamepadRounded';
 import { Avatar, CardHeader } from '@mui/material';
 import { blueGrey } from '@mui/material/colors';
-import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 export default function ControlCard() {

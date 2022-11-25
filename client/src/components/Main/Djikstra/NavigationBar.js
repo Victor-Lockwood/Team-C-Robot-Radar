@@ -3,8 +3,7 @@ import React, { Component } from "react";
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import AltRouteRoundedIcon from '@mui/icons-material/AltRouteRounded';
-import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
-import StopRoundedIcon from '@mui/icons-material/StopRounded';
+
 import BrowserUpdatedRoundedIcon from '@mui/icons-material/BrowserUpdatedRounded';
 
 export default class NavigationBar extends Component {
@@ -22,8 +21,6 @@ export default class NavigationBar extends Component {
     const { postCoordinates } = this.props;
 
     
-
-
     return (
       <div>
         

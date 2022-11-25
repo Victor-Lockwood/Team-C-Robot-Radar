@@ -8,7 +8,6 @@ export default class Node extends Component {
       isStart,
       isWall,
       onMouseDown,
-      onMouseEnter,
       onMouseUp,
       row
     } = this.props;
