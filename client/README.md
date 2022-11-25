@@ -61,7 +61,7 @@ Upload tar to your remote server:
 `scp robot-radar-client.tar user@<REMOTE IP>:.`
 Load image on your remote machine:
 `ssh user@<REMOTE IP>`
-`docker load < obot-radar-client.tar`
+`docker load < robot-radar-client.tar`
 
 Run a new container
 
