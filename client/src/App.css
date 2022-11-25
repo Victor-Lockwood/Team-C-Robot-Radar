@@ -54,13 +54,13 @@
 }
 
 .node-finish {
-  background-image: url("/home/adam/Documents/School/repos/Team-C-Robot-Radar/client/public/bastian.png");
+  background-image: url('../public/bastian.png');
   background-size: 25px 25px;
   transform: rotate(90deg); 
 }
 
 .node-start {
-  background-image: url("/home/adam/Documents/School/repos/Team-C-Robot-Radar/client/public/Basic_green_dot.png");
+  background-image: url("../public/Basic_green_dot.png");
   background-size: 25px 25px;
   background-repeat: no-repeat;
  
