@@ -290,8 +290,18 @@ def clear_obstacles():
         response = Flask.response_class()
         response.content_type = "json"
 
-        data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+        data = data_models.MapObject.get_map_objects(map_id=map_id, object_type=None, password=password,
                                                      host=host, port=call_port)
+
+        # Dijkstra apparently needs this to work
+        ghost_candidates = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                                 host=host, port=call_port, object_type="OurRobot")
+        ghost = ghost_candidates[0]
+        ghost.object_type = "Can"
+        ghost.direction = None
+
+        data.append(ghost)
+
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.headers.add('Access-Control-Allow-Origin', '*')
         return response

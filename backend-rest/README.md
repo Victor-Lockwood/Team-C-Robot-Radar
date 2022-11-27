@@ -80,6 +80,56 @@ square picture is returned.
   - None
 
 
+### /clear_obstacles
+
+#### GET
+
+Deletes all obstacles for the given map id.  Returns what remains for that map -
+should be the robot record plus the ghost obstacle with matching coordinates.
+
+- Returns
+  - JSON object of a list of MapObjects
+  - Sample JSON:
+  ```json
+  [
+      {
+          "map_id": 1,
+          "object_type": "Can",
+          "location": [
+              5,
+              5
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": null,
+          "obj_id": 1
+      },
+      {
+          "map_id": 1,
+          "object_type": "OurRobot",
+          "location": [
+              5,
+              5
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": "E",
+          "obj_id": 1
+      }
+  ]
+  ```
+- URL Parameters
+  - *objtype*
+    - The type of MapObject to be returned.  Valid values are
+    `Can`, `OtherRobot` and `OurRobot`
+  - *istest*
+    - If this is a local endpoint meant to use a local 
+    Docker database (`True` or `False`). Optional, defaults to `False`
+  - *password*
+    - Password for `flaskuser`.
+  - *remote*
+    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    Optional, defaults to `False`.
+
+
 ### /mapdata
 
 #### GET
@@ -93,8 +143,8 @@ square picture is returned.
           "map_id": 1,
           "object_type": "Can",
           "location": [
-              31,
-              25
+              7,
+              4
           ],
           "created_at": "2022-11-12T01:13:27.631719",
           "direction": null,
@@ -102,10 +152,21 @@ square picture is returned.
       },
       {
           "map_id": 1,
+          "object_type": "Can",
+          "location": [
+              5,
+              5
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": null,
+          "obj_id": 1
+      },
+      {
+          "map_id": 1,
           "object_type": "OurRobot",
           "location": [
-              26,
-              25
+              5,
+              5
           ],
           "created_at": "2022-11-12T00:43:29.532003",
           "direction": "E",
@@ -139,7 +200,7 @@ Creates a new Map and sets its id to the session variable `current_map_id`.
 
 #### GET
 Moves the robot in the specified direction, updates its location as well as 
-saves any new obstacles detected.
+saves any new obstacles detected.  Will include a "ghost" obstacle whose coordinates match the robot's
 
 - Returns
   - JSON object of a list of MapObjects
@@ -150,8 +211,8 @@ saves any new obstacles detected.
           "map_id": 1,
           "object_type": "Can",
           "location": [
-              31,
-              25
+              7,
+              4
           ],
           "created_at": "2022-11-12T01:13:27.631719",
           "direction": null,
@@ -159,10 +220,21 @@ saves any new obstacles detected.
       },
       {
           "map_id": 1,
+          "object_type": "Can",
+          "location": [
+              5,
+              5
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": null,
+          "obj_id": 1
+      },
+      {
+          "map_id": 1,
           "object_type": "OurRobot",
           "location": [
-              26,
-              25
+              5,
+              5
           ],
           "created_at": "2022-11-12T00:43:29.532003",
           "direction": "E",
@@ -241,7 +313,8 @@ Returns a list of JSON-formatted logs from the database.
 
 #### POST
 Receives a set of Dijkstra-calculated coordinates to be translated into movements
-to send to the robot.
+to send to the robot.  Will return the current map objects, including a "ghost" obstacle
+whose coordinates match the robot's.  This ghost is required for the frontend to execute its Dijkstra command.
 
 - Request Body Structure 
   ```json
@@ -269,8 +342,8 @@ to send to the robot.
           "map_id": 1,
           "object_type": "Can",
           "location": [
-              31,
-              25
+              7,
+              4
           ],
           "created_at": "2022-11-12T01:13:27.631719",
           "direction": null,
@@ -278,10 +351,21 @@ to send to the robot.
       },
       {
           "map_id": 1,
+          "object_type": "Can",
+          "location": [
+              5,
+              5
+          ],
+          "created_at": "2022-11-12T00:43:29.532003",
+          "direction": null,
+          "obj_id": 1
+      },
+      {
+          "map_id": 1,
           "object_type": "OurRobot",
           "location": [
-              26,
-              25
+              5,
+              5
           ],
           "created_at": "2022-11-12T00:43:29.532003",
           "direction": "E",
