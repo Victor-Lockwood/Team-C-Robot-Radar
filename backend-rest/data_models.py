@@ -159,7 +159,6 @@ class MapObject:
         conn.commit()
         cur.close()
         conn.close()
-
         print("Deleted all obstacles with MapId ", str(map_id))
 
     @staticmethod
@@ -178,10 +177,6 @@ class MapObject:
             cur.execute('SELECT * FROM "MapObject"')
 
         rows = cur.fetchall()
-
-        conn.commit()
-        cur.close()
-        conn.close()
 
         map_objects = MapObject.process_map_object_db_rows(rows)
         return map_objects
