@@ -523,12 +523,12 @@ def check_if_obstacles_in_the_way(map_id, password, host, call_port, move_key, d
                     break
 
             case "E":
-                if (obst_x - 1 == robot_x and move_key == 'W') or (obst_x + 1 == robot_x and move_key == 'S'):
+                if (obst_x + 1 == robot_x and move_key == 'W') or (obst_x - 1 == robot_x and move_key == 'S'):
                     found_obstacle = True
                     break
 
             case "W":
-                if (obst_x + 1 == robot_x and move_key == 'W') or (obst_x - 1 == robot_x and move_key == 'S'):
+                if (obst_x - 1 == robot_x and move_key == 'W') or (obst_x + 1 == robot_x and move_key == 'S'):
                     found_obstacle = True
                     break
 
