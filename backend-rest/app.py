@@ -435,44 +435,37 @@ def move():
     karr_ip = __get_robot_ip()
     robot_response = None
 
-    '''
-    obstacles_in_way = check_if_obstacles_in_the_way(map_id=map_id, password=password, host=host, call_port=call_port)
+    data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                 host=host, port=call_port)
 
-    if obstacles_in_way:
-        data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
-                                                     host=host, port=call_port)
+    obstacles_in_way = False
 
-        response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
-        response.content_type = "json"
-
-        return response
-    '''
+    if move_key != "A" and move_key != "D":
+        obstacles_in_way = check_if_obstacles_in_the_way(map_id=map_id, password=password, host=host, call_port=call_port,
+                                                         move_key=move_key, db_entries=data)
 
     # Position is returned from robot in meters
     try:
-        match move_key:
-            case "W":
-                api_url = karr_ip + "/forward"
-                robot_response = requests.get(api_url).json()
-            case "S":
-                api_url = karr_ip + "/backward"
-                robot_response = requests.get(api_url).json()
-            case "A":
-                api_url = karr_ip + "/left"
-                robot_response = requests.get(api_url).json()
-            case "D":
-                api_url = karr_ip + "/right"
-                robot_response = requests.get(api_url).json()
+        if not obstacles_in_way:
+            match move_key:
+                case "W":
+                    api_url = karr_ip + "/forward"
+                    robot_response = requests.get(api_url).json()
+                case "S":
+                    api_url = karr_ip + "/backward"
+                    robot_response = requests.get(api_url).json()
+                case "A":
+                    api_url = karr_ip + "/left"
+                    robot_response = requests.get(api_url).json()
+                case "D":
+                    api_url = karr_ip + "/right"
+                    robot_response = requests.get(api_url).json()
 
-        process_robot_response(robot_response=robot_response, map_id=map_id,
-                               password=password, host=host, call_port=call_port)
-
-        data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
-                                                     host=host, port=call_port)
+            process_robot_response(robot_response=robot_response, map_id=map_id,
+                                   password=password, host=host, call_port=call_port)
 
         # Dijkstra apparently needs this to work
-        ghost_candidates = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
-                                                                 host=host, port=call_port, object_type="OurRobot")
+        ghost_candidates = [x for x in data if x.object_type == "OurRobot"]
         ghost = ghost_candidates[0]
         ghost.object_type = "Can"
         ghost.direction = None
@@ -481,8 +474,6 @@ def move():
 
         response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
         response.content_type = "json"
-
-        # update_current_camera_view()
 
         return response
     except Exception as ex:
@@ -495,11 +486,11 @@ def move():
         return response
 
 
-# TODO: Implement this
-def check_if_obstacles_in_the_way(map_id,  password, host, call_port):
+def check_if_obstacles_in_the_way(map_id, password, host, call_port, move_key, db_entries):
     robot = None
-    robot_candidates = data_models.MapObject.get_map_objects(map_id=map_id, object_type="OurRobot", password=password,
-                                                             host=host, port=call_port)
+
+    robot_candidates = [x for x in db_entries if x.object_type == "OurRobot"]
+    obstacles = [o for o in db_entries if o.object_type == "Can"]
 
     # Treat it as if it's good to go and when we get our response from movement the robot
     # record will be created
@@ -508,12 +499,13 @@ def check_if_obstacles_in_the_way(map_id,  password, host, call_port):
     else:
         robot = robot_candidates[0]
 
-    obstacles = data_models.MapObject.get_map_objects(map_id=map_id, object_type="Can", password=password,
-                                                      host=host, port=call_port)
+
 
     robot_x = robot.location[0]
     robot_y = robot.location[1]
     direction = robot.direction
+
+    found_obstacle = False
 
     for obstacle in obstacles:
         obst_x = obstacle.location[0]
@@ -521,19 +513,29 @@ def check_if_obstacles_in_the_way(map_id,  password, host, call_port):
 
         match direction:
             case "N":
-                if obst_y - 1 == robot_y:
-                    return True
-            case "S":
-                if obst_y + 1 == robot_y:
-                    return True
-            case "E":
-                if obst_x - 1 == robot_x:
-                    return True
-            case "W":
-                if obst_x + 1 == robot_x:
-                    return True
+                if (obst_y - 1 == robot_y and move_key == 'W') or (obst_y + 1 == robot_y and move_key == 'S'):
+                    found_obstacle = True
+                    break
 
-    return False
+            case "S":
+                if (obst_y + 1 == robot_y and move_key == 'W') or (obst_y - 1 == robot_y and move_key == 'S'):
+                    found_obstacle = True
+                    break
+
+            case "E":
+                if (obst_x - 1 == robot_x and move_key == 'W') or (obst_x + 1 == robot_x and move_key == 'S'):
+                    found_obstacle = True
+                    break
+
+            case "W":
+                if (obst_x + 1 == robot_x and move_key == 'W') or (obst_x - 1 == robot_x and move_key == 'S'):
+                    found_obstacle = True
+                    break
+
+        if found_obstacle:
+            return found_obstacle
+
+    return found_obstacle
 
 
 # Test moving the robot over the Interwebs.
@@ -588,7 +590,6 @@ def process_other_robot_request(robot_response, map_id, password,
 
     map_helper.update_other_robot(map_id=map_id, robot_position=robot_pos, direction=direction,
                                   password=password, host=host, port=call_port, database=database)
-
 
     found_obstacle = map_helper.obstacle_detection(map_id=map_id, direction=direction,
                                                    robot_position=robot_pos, radar_reading=radar_val,
@@ -650,21 +651,6 @@ def process_robot_response(robot_response, map_id, password,
                                                    password=password, host=host, port=call_port, database=database)
 
     return found_obstacle
-
-
-# @app.route('/get_picture', methods=['GET'])
-def update_current_camera_view():
-    karr_ip = __get_robot_ip()
-    api_url = karr_ip + "/liveStream"
-
-    api_response = requests.post(api_url, stream=True)
-
-    dest_dir = "panoramic-images/camera-data"
-
-    with open(dest_dir + '/liveStream.png', 'wb') as out_file:
-        shutil.copyfileobj(api_response.raw, out_file)
-
-    return "Image retrieved"
 
 
 def get_exception_message(ex):
