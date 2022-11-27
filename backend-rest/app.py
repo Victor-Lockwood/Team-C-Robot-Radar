@@ -269,6 +269,45 @@ def other_robot():
     return response
 
 
+# Deletes all obstacles associated with the current map
+# URL PARAMS:
+# - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
+# - password    -   Password for flaskuser.
+# - remote       -   Connect to the Docker DB on Moxie (True or False).
+@app.route('/clear_obstacles', methods=['GET'])
+def clear_obstacles():
+    connection_info = database_handler.get_connection_info(request)
+
+    password = connection_info[0]
+    host = connection_info[1]
+    call_port = connection_info[2]
+
+    map_id = __get_current_map_id()
+
+    try:
+        data_models.MapObject.delete_obstacles(password=password, map_id=map_id, host=host, port=call_port)
+
+        response = Flask.response_class()
+        response.content_type = "json"
+
+        data = data_models.MapObject.get_map_objects(map_id=map_id, password=password,
+                                                     host=host, port=call_port)
+        response.data = json.dumps(data, cls=data_models.DataModelJsonEncoder)
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+    except Exception as ex:
+        exception_message = get_exception_message(ex)
+
+        error_log = data_models.Log(origin=os.path.basename(__file__), message=exception_message, log_type="Error")
+        error_log.create(password=password, host=host, port=call_port)
+
+        response = Flask.response_class()
+
+        response.data = "An error occurred - see logs"
+        response.headers.add('Access-Control-Allow-Origin', '*')
+        return response
+
+
 # Retrieves logs from the DB.
 # URL PARAMS:
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).

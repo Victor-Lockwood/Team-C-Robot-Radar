@@ -149,6 +149,19 @@ class MapObject:
         print("Successfully updated MapObject with Id %s", self.obj_id)
 
     @staticmethod
+    def delete_obstacles(password, map_id, host="localhost", port=5432,
+                         database="RobotRadarAlpha"):
+        conn = database_handler.get_connection(password, host, database, port)
+        cur = conn.cursor()
+
+        cur.execute('DELETE FROM "MapObject" WHERE "MapId" = %s AND "ObjectType" = %s', (map_id, "Can"))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("Deleted all obstacles with MapId ", str(map_id))
+
+    @staticmethod
     def get_map_objects(password, map_id=None, object_type=None, host="localhost", port=5432,
                         database="RobotRadarAlpha"):
         conn = database_handler.get_connection(password, host, database, port)
