@@ -14,14 +14,7 @@ import InfoCard from '../components/authentication/infoCard';
 
 
 export default function Login() {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
-  };
+ 
   const navigate = useNavigate();
 
   const gateway = event => {
@@ -47,7 +40,7 @@ export default function Login() {
          <br/>
          
           <Typography variant="h4" component="div" color='#ffffff'sx={{ flexGrow: 1 }}>
-           L O G I N
+           CSC <b>380</b>
          
           </Typography>
           <br/>
@@ -64,37 +57,15 @@ export default function Login() {
            <Grid item xs={4}>
            <br/>
          <Box component="form" onSubmit={gateway} noValidate sx={{ mt: 1 }}>
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
-              autoFocus
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
-            />
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
-            />
+            
+           
             <Button
               type="submit"
               fullWidth
               variant="contained"
               sx={{ mt: 3, mb: 2 }}
             >
-              Sign In
+              Robot Portal
             </Button>
                 
           </Box>
