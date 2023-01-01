@@ -63,7 +63,7 @@ The following command encompasses the required instructions.
 
 `docker run -dp 36000:3000 robot-radar-client`
 
-#### Deploying to Moxie General Instructions
+#### Deploying to remote General Instructions
 Save your image on your local machine:
 `docker save robot-radar-client > robot-radar-client.tar`
 Upload tar to your remote server:
@@ -130,7 +130,7 @@ The following command encompasses the required instructions.
 
 `docker run -dp 36000:3000 robot-radar-client`
 
-#### Deploying to Moxie General Instructions
+#### Deploying to remote General Instructions
 Save your image on your local machine:
 `docker save robot-radar-client > robot-radar-client.tar`
 Upload tar to your remote server:
