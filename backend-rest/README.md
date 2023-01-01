@@ -126,7 +126,7 @@ should be the robot record plus the ghost obstacle with matching coordinates.
   - *password*
     - Password for `flaskuser`.
   - *remote*
-    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    - Connect to the Docker DB on remote (`True` or `False`).  
     Optional, defaults to `False`.
 
 
@@ -186,7 +186,7 @@ should be the robot record plus the ghost obstacle with matching coordinates.
   - *password*
     - Password for `flaskuser`.
   - *remote*
-    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    - Connect to the Docker DB on remote (`True` or `False`).  
     Optional, defaults to `False`.
 
 #### POST
@@ -252,7 +252,7 @@ saves any new obstacles detected.  Will include a "ghost" obstacle whose coordin
   - *password*
     - Password for `flaskuser`.
   - *remote*
-    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    - Connect to the Docker DB on remote (`True` or `False`).  
     Optional, defaults to `False`.
 
 ### /testrobotconnect
@@ -305,7 +305,7 @@ Returns a list of JSON-formatted logs from the database.
   - *password*
     - Password for `flaskuser`.
   - *remote*
-    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    - Connect to the Docker DB on remote (`True` or `False`).  
     Optional, defaults to `False`.
 
 
@@ -380,7 +380,7 @@ whose coordinates match the robot's.  This ghost is required for the frontend to
   - *password*
     - Password for `flaskuser`.
   - *remote*
-    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    - Connect to the Docker DB on remote (`True` or `False`).  
     Optional, defaults to `False`.
 
 
@@ -429,7 +429,7 @@ saves any new obstacles detected.
   - *password*
     - Password for `flaskuser`.
   - *remote*
-    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    - Connect to the Docker DB on remote (`True` or `False`).  
     Optional, defaults to `False`.
 
 ### /other_robot
@@ -497,5 +497,5 @@ Endpoint for the other robot team to send their updated position and current rad
   - *password*
     - Password for `flaskuser`.
   - *remote*
-    - Connect to the Docker DB on Moxie (`True` or `False`).  
+    - Connect to the Docker DB on remote (`True` or `False`).  
     Optional, defaults to `False`.

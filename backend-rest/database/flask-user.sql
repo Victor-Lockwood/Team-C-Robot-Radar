@@ -1,6 +1,7 @@
 -- Role: flaskuser
 -- DROP ROLE IF EXISTS flaskuser;
 
+-- You will need to generate your own password
 CREATE ROLE flaskuser WITH
   LOGIN
   NOSUPERUSER

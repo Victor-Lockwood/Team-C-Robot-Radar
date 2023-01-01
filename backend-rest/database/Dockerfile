@@ -3,7 +3,7 @@ FROM postgres
 # Copy source
 WORKDIR /database
 
-
+# Change this password for your own needs
 ENV POSTGRES_PASSWORD=mM&kRb42GZEEqC
 ENV POSTGRES_DB RobotRadarAlpha
 

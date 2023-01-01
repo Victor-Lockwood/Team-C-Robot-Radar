@@ -41,7 +41,7 @@ Use `\qt` to exit PSQL and then `exit` to exit bash.
 To get the Docker container's IP:
 `docker container inspect -f '{{ .NetworkSettings.IPAddress }}' <container name>`
 
-### Removing Docker Images from Moxie
+### Removing Docker Images from remote
 SSH in first.
 #### Remove Container
 For each container:
@@ -56,14 +56,14 @@ For each container:
 ### Deployment
 Create the images locally following this readme and the backend-rest readme, then:
 1. Run `docker save --output robot-radar-db.tar robot-radar-db`.  This outputs the
-Postgres DB into a `.tar` to be loaded onto Moxie.
+Postgres DB into a `.tar` to be loaded onto remote.
 2. Run `docker save --output flask-app-backend.tar flask-app-backend`.  Same deal
 but for the Flask app.
-3. SSH into Moxie and create a directory called `robotradar`
+3. SSH into remote and create a directory called `robotradar`
    - If the `.tar` files already exist in this directory, cd in and delete them with `rm robot-radar-db.tar` and `rm flask-app-backend.tar`
-4. Return to terminal, enter `scp robot-radar-db.tar <user>@<REMOTE IP>:/home/<user>/robotradar`
+4. Return to terminal, enter `scp robot-radar-db.tar <user>@remote<REMOTE IP>:/home/<user>/robotradar`
 and follow the prompts.  Wait for the upload to finish.
-5. Enter `scp flask-app-backend.tar <user>@<REMOTE IP>:/home/<user>/robotradar`
+5. Enter `scp flask-app-backend.tar <user>@remote<REMOTE IP>:/home/<user>/robotradar`
 and follow the prompts.  Wait for the upload to finish.
 6. Return to SSH terminal, enter `docker load --input robot-radar-db.tar`
 7. Enter `docker load --input flask-app-backend.tar`
@@ -72,5 +72,5 @@ and follow the prompts.  Wait for the upload to finish.
 10. Follow the instructions in the `To use Postgres` section to verify the tables 
 were created correctly.
 11. Run `docker run -p 9823:5000 -d flask-app-backend`
-12. Hit `http://<REMOTE IP>:9823/logs?password=<password>&remote=True` in either Postman or your
+12. Hit `http://remote<REMOTE IP>:9823/logs?password=<password>&remote=True` in either Postman or your
 browser.  If it works, everything built correctly!

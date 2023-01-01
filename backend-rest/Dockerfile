@@ -19,7 +19,5 @@ RUN pip install -r /requirements.txt
 # Copy host machine app files over to the container directory
 COPY . /flask-app
 
-#EXPOSE 6754/tcp
-
 # Run this bad boy
 CMD python app.py

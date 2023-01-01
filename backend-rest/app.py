@@ -54,7 +54,7 @@ def __get_robot_ip():
     if "robot_ip" in session:
         return str(session["robot_ip"])
     else:
-        return "<ENTER IP HERE>"  # Default public IP for Karr
+        return "<ENTER IP HERE>"  # Put the public IP that reaches the pi here
 
 
 def __get_current_map_id():
@@ -77,7 +77,7 @@ def __get_current_direction():
 # URL PARAMS:
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
-# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# - remote       -   Connect to the Docker DB on remote (True or False).
 @app.route('/panoramic', methods=['GET'])
 def panoramic():
     image1_url = 'panoramic-images/frontPicture.png'
@@ -197,7 +197,7 @@ def get_current_view():
 # URL PARAMS (GET):
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
-# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# - remote       -   Connect to the Docker DB on remote (True or False).
 @app.route('/mapdata', methods=['GET', 'POST'])
 def mapdata():
     connection_info = database_handler.get_connection_info(request)
@@ -273,7 +273,7 @@ def other_robot():
 # URL PARAMS:
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
-# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# - remote       -   Connect to the Docker DB on remote (True or False).
 @app.route('/clear_obstacles', methods=['GET'])
 def clear_obstacles():
     connection_info = database_handler.get_connection_info(request)
@@ -322,7 +322,7 @@ def clear_obstacles():
 # URL PARAMS:
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
-# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# - remote       -   Connect to the Docker DB on remote (True or False).
 @app.route('/logs', methods=['GET', 'POST'])
 def logs():
     connection_info = database_handler.get_connection_info(request)
@@ -359,7 +359,7 @@ def logs():
 # URL PARAMS:
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
-# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# - remote       -   Connect to the Docker DB on remote (True or False).
 @app.route('/autonomous', methods=['POST'])
 def autonomous():
     dijkstra_coordinates = request.json
@@ -415,7 +415,7 @@ def autonomous():
 # URL PARAMS:
 # - istest      -   If this is a local endpoint meant to use a local Docker database (True or False).
 # - password    -   Password for flaskuser.
-# - remote       -   Connect to the Docker DB on Moxie (True or False).
+# - remote       -   Connect to the Docker DB on remote (True or False).
 # - movekey     -   The movement keyboard key hit (W, A, S or D).
 @app.route('/move', methods=['GET'])
 def move():
