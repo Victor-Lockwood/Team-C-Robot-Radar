@@ -332,8 +332,8 @@ def liveStream():
         return "use post"
         #return render_template('pi_camera_index.html')
  #this simply tests our connection w/ remote, things are good if a 200 returns
-@app.route('/logMoxie')
-def logMoxie():
+@app.route('/logremote')
+def logremote():
     url = 'http://<REMOTE IP>:9823/logs?password=<PASSWORD>&remote=True'
     data = requests.get(url)#request.form.get('origin')
     print("Data: ",data)
