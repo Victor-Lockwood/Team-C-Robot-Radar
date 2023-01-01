@@ -12,7 +12,7 @@ export default function Main() {
   const [djikstraPost, setDjikstraPost] = useState({});
 
 var FINISH_NODE_ROW = 1;
-var FINISH_NODE_COL = 9;
+var FINISH_NODE_COL = 7;
 
 const [intervalId, setIntervalId] = useState(0);
 
@@ -32,6 +32,12 @@ var requestOptions = {
 
 const postDjikstra = () =>  {
   fetch("http://<REMOTE IP>:9823/autonomous?password=<PASSWORD>&remote=True", requestOptions)
+  .then(response => response.text())
+  .then(result => console.log(result))
+  .catch(error => console.log('error', error));
+}
+const clearObstacles = () =>  {
+  fetch("http://<REMOTE IP>:9823/clear_obstacles?password=<PASSWORD>&remote=True")
   .then(response => response.text())
   .then(result => console.log(result))
   .catch(error => console.log('error', error));
@@ -276,7 +282,7 @@ function getNodesInShortestPathOrder(finishNode) {
           getCoordinates={() => fetchMap()}
           timeCoordinates={() => getData()}
           postCoordinates={() => postDjikstra()}
-
+          clearObstacles={() => clearObstacles()}
         />
       </div>
     );

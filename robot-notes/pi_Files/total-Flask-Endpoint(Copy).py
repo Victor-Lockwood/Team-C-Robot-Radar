@@ -89,23 +89,13 @@ def index():
 
 @app.route('/forward')
 def forward():
-        #gopigo.turn_left_wait_for_completion(33)
-        #if 'left_speed' not in globals():
-        global left_speed
-        left_speed = 155
-            
-        #if 'right_speed' not in globals():
-        global right_speed
+        left_speed = 160
         right_speed = 150
-
-        #print(left_speed)
-        #print(right_speed)
-        
         gopigo.set_left_speed(left_speed)
         gopigo.set_right_speed(right_speed)
         
         print("Forward!")
-        gopigo.fwd(50)#)+ speedOffset)	# Send the GoPiGo Forward
+        gopigo.fwd(60)
         
         # Checks the motor status to make sure it's finished moving
         while True:
@@ -147,6 +137,12 @@ def forward():
 @app.route('/backward')
 def backward():
         print("Backward!")
+        
+        left_speed = 160
+        right_speed = 140
+        gopigo.set_left_speed(left_speed)
+        gopigo.set_right_speed(right_speed)
+        
         gopigo.bwd(50)	# Send the GoPiGo Backward
         #sleep(2.5)
         
@@ -168,6 +164,7 @@ def backward():
 def left():
         print("Left!")
         gopigo.turn_left_wait_for_completion(100)
+        
         sleep(0.5)
         determineLocationChange('T', 'L')
         data = my_ultrasonic.read()
@@ -277,11 +274,7 @@ def radar():
 
 @app.route('/autonomous/<string:stk>')
 def autonomous(stk):
-    
-    #gopigo.set_left_speed(100)
-    #gopigo.set_right_speed(170)
-    print(gopigo.read_motor_speed)
-    
+    #print(gopigo.read_motor_speed)
     #gopigo.set_speed(150)
     
     
@@ -289,55 +282,38 @@ def autonomous(stk):
     lst = stk.split(",")
     for i in  lst:
         if(i == 'f'):
-            gopigo.fwd(50)
-            determineLocationChange('F', 'F')
-            sleep(2.5)
+            # gopigo.fwd(50)
+            # determineLocationChange('F', 'F')
+            # sleep(2.5)
+            forward()
             #gopigo.stop()
-            #time.sleep(.25)
+            time.sleep(2.5)
         if(i == 'b'):
-            gopigo.bwd(50)
-            determineLocationChange('F', 'B')
+            # gopigo.bwd(50)
+            # determineLocationChange('F', 'B')
+            backward()
             sleep(2.5)
             #gopigo.stop()
             #time.sleep(.25)
         if(i == 'r'):
-            gopigo.turn_right_wait_for_completion(100)
-            determineLocationChange('T', 'R')
+            # gopigo.turn_right_wait_for_completion(100)
+            # determineLocationChange('T', 'R')
+            right()
             sleep(2.5)
             #gopigo.stop()
             #time.sleep(.25)
         if(i == 'l'):
-            gopigo.turn_left_wait_for_completion(100)
-            determineLocationChange('T', 'L')
+            # gopigo.turn_left_wait_for_completion(100)
+            # determineLocationChange('T', 'L')
+            left()
             sleep(2.5)
             #gopigo.stop()
             #time.sleep(.25)
-        sleep(2.5)
+        # sleep(2.5)
         gopigo.stop()
     data = my_ultrasonic.read()
     return jsonify(location= location , orientation = orientation, radar = data)
     
-
-
-@app.route('/moveServo/<string:inp>')
-def moveServo(inp):
-        global servo_pos
-        if inp=='a':
-            servo_pos=servo_pos+10	# If input is 'a' move the servo forward 10 degrees.
-        elif inp=='d':
-            servo_pos=servo_pos-10	# If the input is 'd' move the servo backward by 10 degrees.
-        elif inp=='s':
-            servo_pos=90			
-		
-	#Get the servo angles back to the normal 0 to 180 degree range
-        if servo_pos>180:
-            servo_pos=180
-        if servo_pos<0:
-            servo_pos=0
-		
-        gopigo.servo(servo_pos)		# This function updates the servo with the latest positon.  Move the servo.
-        time.sleep(.1)
-        return 'servo position: ' + str(servo_pos)
     
 @app.route('/liveStream', methods=['GET', 'POST'])
 def liveStream():

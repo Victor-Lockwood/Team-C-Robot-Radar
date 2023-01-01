@@ -5,6 +5,7 @@ import RouteRoundedIcon from '@mui/icons-material/RouteRounded';
 import AltRouteRoundedIcon from '@mui/icons-material/AltRouteRounded';
 
 import BrowserUpdatedRoundedIcon from '@mui/icons-material/BrowserUpdatedRounded';
+import LayersClearRoundedIcon from '@mui/icons-material/LayersClearRounded';
 
 export default class NavigationBar extends Component {
   constructor(props) {
@@ -19,13 +20,17 @@ export default class NavigationBar extends Component {
     const { onVisiualizePressed } = this.props;
     const { getCoordinates } = this.props;
     const { postCoordinates } = this.props;
+    const { clearObstacles } = this.props;
+
 
     
     return (
       <div>
         
-        <Stack direction="row" spacing={1} paddingLeft={1}>
-        <Button startIcon={<RefreshRoundedIcon />} variant="contained" color="warning" onClick={() => window.location.reload(false)}>System Reset</Button>
+        <Stack direction="row" spacing={2} padding={2}>
+        <Button startIcon={<RefreshRoundedIcon />} variant="contained" color="error" onClick={() => window.location.reload(false)}>System Reset</Button>
+        <Button startIcon={<LayersClearRoundedIcon />} variant="contained" color="warning" onClick={() => clearObstacles()}>Clear Obstacles</Button>
+
         <Button startIcon={<BrowserUpdatedRoundedIcon />} variant="contained"  onClick={() => getCoordinates()}>Manual Update</Button>
         <Button startIcon={<RouteRoundedIcon />} variant="contained" onClick={() => onVisiualizePressed()}>Generate Path</Button>
         
